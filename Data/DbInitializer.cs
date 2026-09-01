@@ -115,7 +115,8 @@ public static class DbInitializer
         {
             Name = "Aventuras",
             Description = "Viajes, retos y descubrimientos.",
-            Color = "#059669"
+            // Verde suficientemente oscuro para que el texto blanco tenga contraste.
+            Color = "#047857"
         };
 
         context.Authors.AddRange(garciaMarquez, austen, cervantes);
