@@ -34,6 +34,12 @@ propiedad. La configuración técnica está en
 [`Data/ApplicationDbContext.cs`](../Data/ApplicationDbContext.cs), dentro de
 `OnModelCreating`.
 
+`Author.PhotoFileName` y `Book.CoverImageFileName` no guardan una imagen dentro de la
+base de datos: guardan el nombre seguro de un archivo público. `ImageStorage` valida la
+subida, genera el nombre y devuelve la URL que consume Razor. Los archivos de demo se
+encuentran en `wwwroot/uploads/author-photos` y `wwwroot/uploads/book-covers`; los
+archivos que se suban desde la aplicación siguen ignorados por Git.
+
 ### Por qué `OrderItem` guarda una copia del título y del precio
 
 El precio del catálogo puede cambiar y un libro puede dejar de existir. Por eso una
@@ -84,6 +90,8 @@ organizados por pantalla o caso de uso:
 - `Models/Book.cs` es la entidad persistente y contiene sus asociaciones.
 - `ViewModels/Books/BookFormViewModel.cs` contiene los campos del formulario, el
   `IFormFile` de la portada y los IDs seleccionados de categorías.
+- `ViewModels/Authors/AuthorFormViewModel.cs` contiene la foto opcional y la casilla
+  para eliminar la fotografía actual.
 - `BookFormViewModel.ToBook()` hace el mapeo de entrada; el servicio resuelve después
   las entidades `Author` y `Category` reales desde la base de datos.
 
@@ -115,6 +123,8 @@ de alta.
 - `[Authorize]`: exige una sesión iniciada.
 - `[Authorize(Roles = RoleNames.Admin)]`: exige el rol administrador.
 - `User.FindFirstValue(ClaimTypes.NameIdentifier)`: obtiene el ID de la cuenta actual.
+- `Font Awesome` se carga desde `wwwroot/lib` y `_Layout.cshtml` usa `data-bs-theme`
+  para que el botón de tema cambie entre claro y oscuro sin duplicar vistas.
 
 Cuando una entidad de un proyecto de grupo pertenece a un usuario, se añade el mismo
 patrón:

@@ -113,7 +113,7 @@
                     {
                         <div class="col-md-6">
                             <article class="border rounded-3 p-3 h-100">
-                                <div class="d-flex justify-content-between gap-2"><a class="fw-semibold text-decoration-none" asp-controller="Books" asp-action="Details" asp-route-id="@review.BookId">@review.Book.Title</a><span class="rating">@(new string('★', review.Rating))</span></div>
+                                <div class="d-flex justify-content-between gap-2"><a class="fw-semibold text-decoration-none" asp-controller="Books" asp-action="Details" asp-route-id="@review.BookId">@review.Book.Title</a><span class="rating" title="@review.Rating de 5" aria-label="@review.Rating de 5 estrellas"><i class="fa-solid fa-star" aria-hidden="true"></i> @review.Rating</span></div>
                                 <p class="small text-secondary mt-2 mb-0">@review.Comment</p>
                             </article>
                         </div>

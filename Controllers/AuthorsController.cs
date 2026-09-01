@@ -50,7 +50,16 @@ public sealed class AuthorsController : Controller
             return View(model);
         }
 
-        await authors.CreateAsync(ToEntity(model), cancellationToken);
+        try
+        {
+            await authors.CreateAsync(ToEntity(model), model.Photo, cancellationToken);
+        }
+        catch (InvalidOperationException exception)
+        {
+            ModelState.AddModelError(string.Empty, exception.Message);
+            return View(model);
+        }
+
         TempData["Message"] = "Autor creado correctamente.";
         return RedirectToAction(nameof(Index));
     }
@@ -81,12 +90,27 @@ public sealed class AuthorsController : Controller
 
         if (!ModelState.IsValid)
         {
+            await RestoreCurrentPhotoAsync(model, id, cancellationToken);
             return View(model);
         }
 
-        if (!await authors.UpdateAsync(id, ToEntity(model), cancellationToken))
+        try
         {
-            return NotFound();
+            if (!await authors.UpdateAsync(
+                    id,
+                    ToEntity(model),
+                    model.Photo,
+                    model.RemovePhoto,
+                    cancellationToken))
+            {
+                return NotFound();
+            }
+        }
+        catch (InvalidOperationException exception)
+        {
+            ModelState.AddModelError(string.Empty, exception.Message);
+            await RestoreCurrentPhotoAsync(model, id, cancellationToken);
+            return View(model);
         }
 
         TempData["Message"] = "Autor actualizado correctamente.";
@@ -133,6 +157,17 @@ public sealed class AuthorsController : Controller
         Name = author.Name,
         Bio = author.Bio,
         BirthDate = author.BirthDate,
-        Nationality = author.Nationality
+        Nationality = author.Nationality,
+        CurrentPhotoFileName = author.PhotoFileName
     };
+
+    /// <summary>Vuelve a cargar la foto actual si el formulario de edición falla.</summary>
+    private async Task RestoreCurrentPhotoAsync(
+        AuthorFormViewModel model,
+        int id,
+        CancellationToken cancellationToken)
+    {
+        var current = await authors.GetDetailsAsync(id, cancellationToken);
+        model.CurrentPhotoFileName = current?.PhotoFileName;
+    }
 }

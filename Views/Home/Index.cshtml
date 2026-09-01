@@ -4,32 +4,28 @@
     ViewData["Title"] = "Inicio";
 }
 
-<section class="hero-panel p-4 p-lg-5 mb-5">
+<section class="bg-primary text-white rounded-4 p-4 p-lg-5 mb-5 shadow-sm">
     <div class="row align-items-center g-4 g-xl-5">
-        <div class="col-lg-7">
-            <span class="eyebrow">Proyecto de referencia</span>
+        <div class="col-lg-8">
+            <span class="badge text-bg-light text-primary">Proyecto de referencia</span>
             <h1 class="display-4 fw-bold mt-3 mb-3">Una buena historia empieza aquí.</h1>
             <p class="lead mb-3">Explora una biblioteca digital construida para aprender ASP.NET Core MVC, C#, EF Core, Identity y Razor.</p>
-            <p class="hero-copy mb-0">Un proyecto pequeño, completo y fácil de ampliar: catálogo, usuarios, reseñas, favoritos y un checkout ficticio.</p>
+            <p class="mb-0 text-white-50">Un proyecto pequeño, completo y fácil de ampliar: catálogo, usuarios, reseñas, favoritos y un checkout ficticio.</p>
             <div class="d-flex flex-wrap align-items-center gap-3 mt-4">
-                <a class="btn btn-light text-primary" asp-controller="Books" asp-action="Index">Explorar catálogo <span aria-hidden="true">→</span></a>
-                <a class="btn btn-link link-light text-decoration-none px-0" asp-controller="Reviews" asp-action="Index">Leer reseñas <span aria-hidden="true">↗</span></a>
+                <a class="btn btn-light text-primary" asp-controller="Books" asp-action="Index">Explorar catálogo <i class="fa-solid fa-arrow-right ms-1" aria-hidden="true"></i></a>
+                <a class="btn btn-link link-light text-decoration-none px-0" asp-controller="Reviews" asp-action="Index">Leer reseñas <i class="fa-solid fa-arrow-up-right-from-square ms-1" aria-hidden="true"></i></a>
             </div>
-            <div class="hero-trust mt-4">
-                <span>Datos de demostración</span>
-                <span>Responsive</span>
-                <span>Bootstrap 5</span>
+            <div class="d-flex flex-wrap gap-3 mt-4 small text-white-50">
+                <span><i class="fa-solid fa-database me-1" aria-hidden="true"></i>Datos de demostración</span>
+                <span><i class="fa-solid fa-mobile-screen-button me-1" aria-hidden="true"></i>Responsive</span>
+                <span><i class="fa-brands fa-bootstrap me-1" aria-hidden="true"></i>Bootstrap 5</span>
             </div>
         </div>
-        <div class="col-lg-5 d-none d-md-block">
-            <div class="hero-art" aria-hidden="true">
-                <div class="hero-book hero-book-back"></div>
-                <div class="hero-book hero-book-main">
-                    <span class="hero-book-kicker">Biblioteca · 2026</span>
-                    <strong>Historias<br />que dejan<br />huella.</strong>
-                    <span class="hero-book-line">Lee · descubre · comparte</span>
-                </div>
-                <div class="hero-sticker">Nuevas<br />lecturas</div>
+        <div class="col-lg-4">
+            <div class="bg-white bg-opacity-10 rounded-4 p-4 text-center">
+                <i class="fa-solid fa-book-open display-1 mb-3" aria-hidden="true"></i>
+                <h2 class="h4">Historias que dejan huella</h2>
+                <p class="mb-0 text-white-50">Lee, descubre y comparte tus próximas lecturas.</p>
             </div>
         </div>
     </div>
@@ -74,7 +70,7 @@
         <h2 class="h2 mt-2 mb-1">Para empezar a leer</h2>
         <p class="text-secondary mb-0">Algunas historias disponibles en el catálogo.</p>
     </div>
-    <a class="btn btn-sm btn-outline-primary" asp-controller="Books" asp-action="Index">Ver todos <span aria-hidden="true">→</span></a>
+    <a class="btn btn-sm btn-outline-primary" asp-controller="Books" asp-action="Index">Ver todos <i class="fa-solid fa-arrow-right ms-1" aria-hidden="true"></i></a>
 </section>
 
 @if (Model.FeaturedBooks.Count == 0)
@@ -97,17 +93,17 @@ else
                         }
                         else
                         {
-                            <span aria-hidden="true">📖</span>
+                            <i class="fa-solid fa-book-open" aria-hidden="true"></i>
                         }
                     </div>
                     <div class="p-3 p-lg-4 d-flex flex-column h-100">
                         <span class="small text-uppercase fw-bold text-secondary mb-2">Lectura recomendada</span>
-                        <h3 class="h5 mb-1"><a class="link-dark text-decoration-none" asp-controller="Books" asp-action="Details" asp-route-id="@book.Id">@book.Title</a></h3>
+                            <h3 class="h5 mb-1"><a class="link-body-emphasis text-decoration-none" asp-controller="Books" asp-action="Details" asp-route-id="@book.Id">@book.Title</a></h3>
                         <p class="text-secondary small mb-3">@book.Author.Name</p>
                         <p class="small text-secondary mb-4">@book.Synopsis</p>
                         <div class="d-flex justify-content-between align-items-center gap-2">
                             <span class="price-tag">@book.Price.ToString("C")</span>
-                            <a class="btn btn-sm btn-outline-primary" asp-controller="Books" asp-action="Details" asp-route-id="@book.Id">Descubrir <span aria-hidden="true">↗</span></a>
+                            <a class="btn btn-sm btn-outline-primary" asp-controller="Books" asp-action="Details" asp-route-id="@book.Id">Descubrir <i class="fa-solid fa-arrow-up-right-from-square ms-1" aria-hidden="true"></i></a>
                         </div>
                     </div>
                 </article>

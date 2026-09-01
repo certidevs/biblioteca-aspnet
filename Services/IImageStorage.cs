@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace BibliotecaAspNet.Services;
 
-/// <summary>Contrato común para guardar y servir avatares y portadas locales.</summary>
+/// <summary>Contrato común para guardar y servir avatares, autores y portadas locales.</summary>
 public interface IImageStorage
 {
     /// <summary>Valida y guarda el archivo con un nombre generado por la aplicación.</summary>

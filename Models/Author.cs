@@ -24,6 +24,10 @@ public sealed class Author
     [StringLength(80)]
     public string? Nationality { get; set; }
 
+    /// <summary>Nombre generado de la fotografía del autor guardada en wwwroot/uploads/author-photos.</summary>
+    [StringLength(260)]
+    public string? PhotoFileName { get; set; }
+
     /// <summary>Libros escritos por este autor; es la navegación inversa de <see cref="Book.Author"/>.</summary>
     public ICollection<Book> Books { get; set; } = new List<Book>();
 }

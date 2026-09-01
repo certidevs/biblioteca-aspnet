@@ -56,6 +56,7 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(author => author.Name).HasMaxLength(150).IsRequired();
             entity.Property(author => author.Bio).HasMaxLength(2000);
             entity.Property(author => author.Nationality).HasMaxLength(80);
+            entity.Property(author => author.PhotoFileName).HasMaxLength(260);
         });
 
         modelBuilder.Entity<Book>(entity =>

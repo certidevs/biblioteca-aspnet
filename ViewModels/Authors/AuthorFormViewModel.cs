@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace BibliotecaAspNet.ViewModels.Authors;
 
@@ -21,4 +22,14 @@ public sealed class AuthorFormViewModel
 
     [StringLength(80)]
     public string? Nationality { get; set; }
+
+    /// <summary>Fotografía opcional recibida desde el formulario multipart.</summary>
+    [Display(Name = "Fotografía del autor")]
+    public IFormFile? Photo { get; set; }
+
+    /// <summary>Nombre de la fotografía que ya está guardada, solo para mostrarla en Edit.</summary>
+    public string? CurrentPhotoFileName { get; set; }
+
+    [Display(Name = "Eliminar fotografía actual")]
+    public bool RemovePhoto { get; set; }
 }

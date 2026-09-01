@@ -13,7 +13,7 @@
     </div>
     <div class="d-flex align-items-center gap-2">
         <span class="badge-soft">@Model.Count cuenta(s)</span>
-        <a class="btn btn-primary" asp-action="Create"><span aria-hidden="true">＋</span> Nuevo usuario</a>
+        <a class="btn btn-primary" asp-action="Create"><i class="fa-solid fa-plus me-1" aria-hidden="true"></i>Nuevo usuario</a>
     </div>
 </header>
 
@@ -22,8 +22,8 @@
         <div class="col-md-9">
             <label class="form-label" for="search">Buscar una cuenta</label>
             <div class="input-group">
-                <span class="input-group-text bg-white border-end-0" aria-hidden="true">⌕</span>
-                <input class="form-control border-start-0 ps-0" id="search" name="search" value="@search" placeholder="Usuario, email o nombre" />
+                <span class="input-group-text" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>
+                <input class="form-control" id="search" name="search" value="@search" placeholder="Usuario, email o nombre" />
             </div>
         </div>
         <div class="col-md-3 d-grid">

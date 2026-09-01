@@ -19,16 +19,27 @@
         : "nav-link";
 }
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-bs-theme="light">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@(ViewData["Title"] is null ? "Biblioteca Digital" : $"{ViewData["Title"]} · Biblioteca Digital")</title>
+    @* Aplicamos el tema guardado antes de pintar para evitar un destello de color. *@
+    <script>
+        (() => {
+            const savedTheme = localStorage.getItem("biblioteca-theme");
+            const theme = savedTheme === "dark" || savedTheme === "light"
+                ? savedTheme
+                : (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+            document.documentElement.setAttribute("data-bs-theme", theme);
+        })();
+    </script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/fontawesome/css/all.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light app-navbar sticky-top" data-bs-theme="light">
+    <nav class="navbar navbar-expand-lg app-navbar sticky-top">
         <div class="container-xl">
             <a class="navbar-brand fw-bold d-flex align-items-center" asp-controller="Home" asp-action="Index" aria-label="Biblioteca Digital, inicio">
                 <span class="brand-mark">B</span> Biblioteca
@@ -69,11 +80,19 @@
                     }
                 </ul>
                 <ul class="navbar-nav align-items-lg-center gap-lg-1">
+                    <li class="nav-item">
+                        <button class="btn btn-outline-secondary btn-sm theme-toggle" type="button"
+                                data-theme-toggle aria-pressed="false" title="Cambiar a modo oscuro">
+                            <i class="fa-solid fa-moon" data-theme-icon aria-hidden="true"></i>
+                            <span class="d-none d-sm-inline" data-theme-label>Oscuro</span>
+                            <span class="visually-hidden" data-theme-sr-label>Cambiar a modo oscuro</span>
+                        </button>
+                    </li>
                     @if (User.Identity?.IsAuthenticated == true)
                     {
                         <li class="nav-item">
                             <a class="nav-link cart-link d-inline-flex align-items-center gap-2" asp-controller="Cart" asp-action="Index">
-                                <span aria-hidden="true">🛒</span>
+                                <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
                                 <span>Carrito</span>
                                 @if (cartCount > 0)
                                 {

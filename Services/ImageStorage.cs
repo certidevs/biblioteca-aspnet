@@ -137,6 +137,7 @@ public sealed class ImageStorage : IImageStorage
         {
             ImageFolder.Avatars => "avatars",
             ImageFolder.BookCovers => "book-covers",
+            ImageFolder.AuthorPhotos => "author-photos",
             _ => throw new ArgumentOutOfRangeException(nameof(folder))
         };
 
@@ -150,6 +151,7 @@ public sealed class ImageStorage : IImageStorage
         {
             ImageFolder.Avatars => "avatars",
             ImageFolder.BookCovers => "book-covers",
+            ImageFolder.AuthorPhotos => "author-photos",
             _ => throw new ArgumentOutOfRangeException(nameof(folder))
         };
 

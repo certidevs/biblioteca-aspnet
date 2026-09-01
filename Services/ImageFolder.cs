@@ -10,5 +10,8 @@ public enum ImageFolder
     Avatars,
 
     /// <summary>Portadas de libros.</summary>
-    BookCovers
+    BookCovers,
+
+    /// <summary>Fotografías de autores.</summary>
+    AuthorPhotos
 }

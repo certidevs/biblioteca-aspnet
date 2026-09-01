@@ -7,7 +7,7 @@
 
 <header class="page-header d-flex flex-wrap justify-content-between align-items-start gap-3">
     <div>
-        <a class="small text-decoration-none" asp-action="Index">← Volver a pedidos</a>
+        <a class="small text-decoration-none" asp-action="Index"><i class="fa-solid fa-arrow-left me-1" aria-hidden="true"></i>Volver a pedidos</a>
         <span class="eyebrow d-block mt-4">Detalle de compra</span>
         <h1 class="page-title">Pedido #@Model.Id</h1>
         <p class="page-subtitle mb-0">Realizado el @Model.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</p>
@@ -36,14 +36,14 @@
                             }
                             else
                             {
-                                <span aria-hidden="true">📖</span>
+                                <i class="fa-solid fa-book-open" aria-hidden="true"></i>
                             }
                         </div>
                         <div class="cart-item-content order-item-content d-flex justify-content-between align-items-center gap-3">
                             <div>
                                 @if (item.BookId is int bookId)
                                 {
-                                    <h3 class="h5 mb-1"><a class="link-dark text-decoration-none" asp-controller="Books" asp-action="Details" asp-route-id="@bookId">@item.BookTitle</a></h3>
+                                    <h3 class="h5 mb-1"><a class="link-body-emphasis text-decoration-none" asp-controller="Books" asp-action="Details" asp-route-id="@bookId">@item.BookTitle</a></h3>
                                 }
                                 else
                                 {

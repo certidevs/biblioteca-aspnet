@@ -12,6 +12,7 @@ la base transversal que no debería repetirse en cada grupo.
 - `Controllers/UsersController.cs`: panel de administración de usuarios.
 - `Services/UserService.cs` e `IUserService`: casos de uso de cuenta y administración.
 - `Services/ImageStorage.cs`, `IImageStorage.cs` y `ImageFolder.cs`: almacenamiento común de imágenes.
+- `wwwroot/lib/fontawesome` y el selector `data-bs-theme` del layout: iconos y tema reutilizables.
 - ViewModels y vistas de `Account`, `Profile` y `Users`.
 - Roles `User` y `Admin`, datos de demo y protección antiforgery.
 
@@ -76,6 +77,7 @@ Al empezar su dominio, los alumnos ya pueden dar por disponibles:
 - `User.IsActive` para no permitir acciones a cuentas desactivadas.
 - `User.IsInRole("Admin")` o `[Authorize(Roles = RoleNames.Admin)]` para administración.
 - `IImageStorage` para subir imágenes de productos, películas, restaurantes, platos, etc.
+- Font Awesome para mantener los iconos del proyecto sin emojis y con etiquetas accesibles.
 - `Profile` como lugar donde el usuario gestiona sus datos y avatar.
 
 La lógica específica de compra, pedido, entrada o reseña sigue perteneciendo a cada

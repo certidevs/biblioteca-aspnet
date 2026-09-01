@@ -73,21 +73,24 @@ public static class DbInitializer
             Name = "Gabriel García Márquez",
             Nationality = "Colombiana",
             BirthDate = new DateTime(1927, 3, 6),
-            Bio = "Escritor colombiano y uno de los grandes representantes del realismo mágico."
+            Bio = "Escritor colombiano y uno de los grandes representantes del realismo mágico.",
+            PhotoFileName = "demo-author-garcia-marquez.jpg"
         };
         var austen = new Author
         {
             Name = "Jane Austen",
             Nationality = "Británica",
             BirthDate = new DateTime(1775, 12, 16),
-            Bio = "Novelista inglesa conocida por sus historias sobre la sociedad y las relaciones humanas."
+            Bio = "Novelista inglesa conocida por sus historias sobre la sociedad y las relaciones humanas.",
+            PhotoFileName = "demo-author-jane-austen.jpg"
         };
         var cervantes = new Author
         {
             Name = "Miguel de Cervantes",
             Nationality = "Española",
             BirthDate = new DateTime(1547, 9, 29),
-            Bio = "Autor de una de las obras fundamentales de la literatura universal."
+            Bio = "Autor de una de las obras fundamentales de la literatura universal.",
+            PhotoFileName = "demo-author-miguel-de-cervantes.jpg"
         };
 
         var novela = new Category
@@ -131,6 +134,7 @@ public static class DbInitializer
                 Pages = 496,
                 Language = "Español",
                 Synopsis = "La historia de la familia Buendía a lo largo de varias generaciones en Macondo.",
+                CoverImageFileName = "demo-book-cien-anos-de-soledad.jpg",
                 Author = garciaMarquez,
                 Categories = new List<Category> { novela, realismoMagico, clasico }
             },
@@ -144,6 +148,7 @@ public static class DbInitializer
                 Pages = 432,
                 Language = "Español",
                 Synopsis = "Elizabeth Bennet y Fitzwilliam Darcy deben superar sus primeras impresiones.",
+                CoverImageFileName = "demo-book-orgullo-y-prejuicio.jpg",
                 Author = austen,
                 Categories = new List<Category> { novela, clasico }
             },
@@ -157,6 +162,7 @@ public static class DbInitializer
                 Pages = 1056,
                 Language = "Español",
                 Synopsis = "Las aventuras del ingenioso hidalgo que decide convertirse en caballero andante.",
+                CoverImageFileName = "demo-book-don-quijote.jpg",
                 Author = cervantes,
                 Categories = new List<Category> { novela, clasico, aventuras }
             },
@@ -170,6 +176,7 @@ public static class DbInitializer
                 Pages = 288,
                 Language = "Español",
                 Synopsis = "Una novela contemporánea sobre libros, memoria y el poder de las historias.",
+                CoverImageFileName = "demo-book-biblioteca-de-los-suenos.jpg",
                 Author = austen,
                 Categories = new List<Category> { novela }
             },
@@ -183,6 +190,7 @@ public static class DbInitializer
                 Pages = 368,
                 Language = "Español",
                 Synopsis = "Una historia de amor, espera y segundas oportunidades a lo largo de varias décadas.",
+                CoverImageFileName = "demo-book-amor-en-tiempos-del-colera.jpg",
                 Author = garciaMarquez,
                 Categories = new List<Category> { novela, realismoMagico }
             },
@@ -196,6 +204,7 @@ public static class DbInitializer
                 Pages = 384,
                 Language = "Español",
                 Synopsis = "Las hermanas Dashwood afrontan el amor, la pérdida y las normas de la sociedad de su tiempo.",
+                CoverImageFileName = "demo-book-sentido-y-sensibilidad.jpg",
                 Author = austen,
                 Categories = new List<Category> { novela, clasico }
             }
@@ -262,6 +271,7 @@ public static class DbInitializer
                 Pages = 368,
                 Language = "Español",
                 Synopsis = "Una historia de amor, espera y segundas oportunidades a lo largo de varias décadas.",
+                CoverImageFileName = "demo-book-amor-en-tiempos-del-colera.jpg",
                 Author = garciaMarquez,
                 Categories = new List<Category> { novela, realismoMagico }
             });
@@ -279,6 +289,7 @@ public static class DbInitializer
                 Pages = 384,
                 Language = "Español",
                 Synopsis = "Las hermanas Dashwood afrontan el amor, la pérdida y las normas de la sociedad de su tiempo.",
+                CoverImageFileName = "demo-book-sentido-y-sensibilidad.jpg",
                 Author = austen,
                 Categories = new List<Category> { novela, clasico }
             });

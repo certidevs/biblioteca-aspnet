@@ -1,27 +1,56 @@
 @model AuthorFormViewModel
+@inject IImageStorage ImageStorage
 
 <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
 <section class="form-section">
     <span class="eyebrow">Ficha del autor</span>
     <h2 class="form-section-title">Información principal</h2>
-    <div class="row g-3">
+    <div class="row g-4 align-items-start">
+        <div class="col-md-4">
+            @if (ImageStorage.GetUrl(ImageFolder.AuthorPhotos, Model.CurrentPhotoFileName) is string photoUrl)
+            {
+                <img class="author-photo author-photo-form" src="@photoUrl" alt="Fotografía actual de @Model.Name" />
+            }
+            else
+            {
+                <div class="author-photo author-photo-form author-photo-placeholder" aria-hidden="true">
+                    <i class="fa-solid fa-user" aria-hidden="true"></i>
+                </div>
+            }
+        </div>
         <div class="col-md-8">
             <label asp-for="Name" class="form-label"></label>
             <input asp-for="Name" class="form-control" autofocus />
             <span asp-validation-for="Name" class="text-danger"></span>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-6">
             <label asp-for="Nationality" class="form-label"></label>
             <input asp-for="Nationality" class="form-control" />
             <span asp-validation-for="Nationality" class="text-danger"></span>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-6">
             <label asp-for="BirthDate" class="form-label"></label>
             <input asp-for="BirthDate" class="form-control" />
             <span asp-validation-for="BirthDate" class="text-danger"></span>
         </div>
     </div>
+</section>
+
+<section class="form-section">
+    <span class="eyebrow">Imagen</span>
+    <h2 class="form-section-title">Fotografía del autor</h2>
+    <label asp-for="Photo" class="form-label"></label>
+    <input asp-for="Photo" class="form-control" type="file" accept=".jpg,.jpeg,.png,.gif,.webp,image/jpeg,image/png,image/gif,image/webp" />
+    <div class="form-text">JPG, PNG, GIF o WEBP. Tamaño máximo: 5 MB.</div>
+    <span asp-validation-for="Photo" class="text-danger"></span>
+    @if (Model.CurrentPhotoFileName is not null)
+    {
+        <div class="form-check mt-3">
+            <input asp-for="RemovePhoto" class="form-check-input" />
+            <label asp-for="RemovePhoto" class="form-check-label"></label>
+        </div>
+    }
 </section>
 
 <section class="form-section">

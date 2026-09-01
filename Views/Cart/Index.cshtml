@@ -10,13 +10,13 @@
         <h1 class="page-title">Mi carrito</h1>
         <p class="page-subtitle mb-0">Revisa tus libros, ajusta las cantidades y prepara tu pedido.</p>
     </div>
-    <a class="btn btn-outline-primary" asp-controller="Books" asp-action="Index">← Seguir comprando</a>
+    <a class="btn btn-outline-primary" asp-controller="Books" asp-action="Index"><i class="fa-solid fa-arrow-left me-1" aria-hidden="true"></i>Seguir comprando</a>
 </header>
 
 @if (Model.IsEmpty)
 {
     <section class="empty-state text-center">
-        <div class="empty-icon mx-auto" aria-hidden="true">🛒</div>
+        <div class="empty-icon mx-auto" aria-hidden="true"><i class="fa-solid fa-cart-shopping"></i></div>
         <h2 class="h4 mt-3">Tu carrito está vacío</h2>
         <p class="text-secondary">Añade algún libro del catálogo para preparar un pedido.</p>
         <a class="btn btn-primary" asp-controller="Books" asp-action="Index">Explorar libros</a>
@@ -46,13 +46,13 @@ else
                                 }
                                 else
                                 {
-                                    <span aria-hidden="true">📖</span>
+                                    <i class="fa-solid fa-book-open" aria-hidden="true"></i>
                                 }
                             </div>
                             <div class="cart-item-content">
                                 <div class="d-flex justify-content-between gap-3">
                                     <div>
-                                        <h3 class="h5 mb-1"><a class="link-dark text-decoration-none" asp-controller="Books" asp-action="Details" asp-route-id="@item.Book.Id">@item.Book.Title</a></h3>
+                                        <h3 class="h5 mb-1"><a class="link-body-emphasis text-decoration-none" asp-controller="Books" asp-action="Details" asp-route-id="@item.Book.Id">@item.Book.Title</a></h3>
                                         <p class="small text-secondary mb-3">@item.Book.Author.Name · @item.Book.Price.ToString("C") por unidad</p>
                                     </div>
                                     <strong class="price-tag text-nowrap">@item.LineTotal.ToString("C")</strong>
@@ -101,7 +101,7 @@ else
                     <strong>Total</strong>
                     <strong class="price-tag fs-4">@Model.Total.ToString("C")</strong>
                 </div>
-                <a class="btn btn-primary w-100" asp-action="Checkout">Continuar al pago <span aria-hidden="true">→</span></a>
+                <a class="btn btn-primary w-100" asp-action="Checkout">Continuar al pago <i class="fa-solid fa-arrow-right ms-1" aria-hidden="true"></i></a>
                 <p class="small text-secondary mt-3 mb-0">Es una simulación educativa. No se realiza ningún cargo real.</p>
             </aside>
         </div>

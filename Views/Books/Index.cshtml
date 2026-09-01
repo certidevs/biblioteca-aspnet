@@ -21,7 +21,7 @@
         <span class="badge-soft">@Model.Books.Count resultado(s)</span>
         @if (User.IsInRole(RoleNames.Admin))
         {
-            <a class="btn btn-primary" asp-action="Create"><span aria-hidden="true">＋</span> Nuevo libro</a>
+            <a class="btn btn-primary" asp-action="Create"><i class="fa-solid fa-plus me-1" aria-hidden="true"></i>Nuevo libro</a>
         }
     </div>
 </header>
@@ -31,8 +31,8 @@
         <div class="col-lg-5">
             <label class="form-label" for="search">Buscar en el catálogo</label>
             <div class="input-group">
-                <span class="input-group-text bg-white border-end-0" aria-hidden="true">⌕</span>
-                <input class="form-control border-start-0 ps-0" id="search" name="search" value="@Model.Search" placeholder="Título o autor" />
+                <span class="input-group-text" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>
+                <input class="form-control" id="search" name="search" value="@Model.Search" placeholder="Título o autor" />
             </div>
         </div>
         <div class="col-md-4 col-lg-2">
@@ -117,7 +117,7 @@
 @if (Model.Books.Count == 0)
 {
     <div class="empty-state text-center">
-        <div class="empty-icon mx-auto" aria-hidden="true">⌕</div>
+        <div class="empty-icon mx-auto" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></div>
         <h2 class="h4 mt-3">No hay libros que coincidan</h2>
         <p class="text-secondary">Prueba a quitar algún filtro o vuelve al catálogo completo.</p>
         <a class="btn btn-outline-primary" asp-action="Index">Limpiar filtros</a>
@@ -139,7 +139,7 @@ else
                         }
                         else
                         {
-                            <span aria-hidden="true">📖</span>
+                            <i class="fa-solid fa-book-open" aria-hidden="true"></i>
                         }
                         <span class="book-status badge rounded-pill @(book.Available ? "text-bg-success" : "text-bg-secondary") position-absolute top-0 end-0 m-3">@(book.Available ? "Disponible" : "Agotado")</span>
                     </div>
@@ -147,11 +147,11 @@ else
                         <div class="d-flex justify-content-between gap-2 align-items-start">
                             <div>
                                 <span class="small text-uppercase text-secondary fw-bold">Libro</span>
-                                <h2 class="h5 mt-1 mb-1"><a class="link-dark text-decoration-none" asp-action="Details" asp-route-id="@book.Id">@book.Title</a></h2>
+                            <h2 class="h5 mt-1 mb-1"><a class="link-body-emphasis text-decoration-none" asp-action="Details" asp-route-id="@book.Id">@book.Title</a></h2>
                             </div>
                             @if (isFavorite)
                             {
-                                <span class="text-warning" title="Favorito" aria-label="Favorito">★</span>
+                                <i class="fa-solid fa-heart text-danger" title="Favorito" aria-label="Favorito"></i>
                             }
                         </div>
                         <p class="text-secondary small mb-3">@book.Author.Name</p>
@@ -164,7 +164,7 @@ else
                         <p class="small text-secondary mb-4">@book.Synopsis</p>
                         <div class="d-flex justify-content-between align-items-center gap-2">
                             <span class="price-tag fs-5">@book.Price.ToString("C")</span>
-                            <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@book.Id">Ver detalle <span aria-hidden="true">↗</span></a>
+                            <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@book.Id">Ver detalle <i class="fa-solid fa-arrow-up-right-from-square ms-1" aria-hidden="true"></i></a>
                         </div>
                         <div class="d-flex flex-wrap gap-2 mt-3">
                             @if (User.Identity?.IsAuthenticated == true && book.Available)
@@ -173,7 +173,7 @@ else
                                     <input type="hidden" name="id" value="@book.Id" />
                                     <input type="hidden" name="quantity" value="1" />
                                     <input type="hidden" name="returnUrl" value="@currentUrl" />
-                                    <button class="btn btn-sm btn-primary w-100" type="submit"><span aria-hidden="true">🛒</span> Añadir al carrito</button>
+                                    <button class="btn btn-sm btn-primary w-100" type="submit"><i class="fa-solid fa-cart-shopping me-1" aria-hidden="true"></i>Añadir al carrito</button>
                                 </form>
                             }
                             @if (User.Identity?.IsAuthenticated == true)
@@ -181,7 +181,9 @@ else
                                 <form asp-action="ToggleFavorite" method="post">
                                     <input type="hidden" name="id" value="@book.Id" />
                                     <input type="hidden" name="returnUrl" value="@currentUrl" />
-                                    <button class="btn btn-sm btn-outline-warning" type="submit" title="@(isFavorite ? "Quitar de favoritos" : "Añadir a favoritos")">@(isFavorite ? "★" : "☆")</button>
+                                    <button class="btn btn-sm btn-outline-warning" type="submit" title="@(isFavorite ? "Quitar de favoritos" : "Añadir a favoritos")" aria-label="@(isFavorite ? "Quitar de favoritos" : "Añadir a favoritos")">
+                                        <i class="@(isFavorite ? "fa-solid" : "fa-regular") fa-heart" aria-hidden="true"></i>
+                                    </button>
                                 </form>
                             }
                         </div>

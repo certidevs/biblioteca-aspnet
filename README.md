@@ -10,8 +10,10 @@ C# y ASP.NET Core MVC.
 - ASP.NET Core MVC con controladores y vistas Razor (`.cshtml`).
 - Entity Framework Core 10 con SQLite.
 - ASP.NET Core Identity con autenticación por cookies y roles.
-- Bootstrap 5.3.8 servido desde `wwwroot/lib`, con un tema visual propio responsive.
-- Subida local de avatares y portadas con validación de tamaño, extensión y firma del archivo.
+- Bootstrap 5.3.8 servido desde `wwwroot/lib`, usando sus componentes y utilidades con una capa CSS propia mínima y responsive.
+- Font Awesome Free 7.3.1 servido localmente desde `wwwroot/lib/fontawesome` para iconos accesibles y reutilizables.
+- Modo claro/oscuro con `data-bs-theme` de Bootstrap y un selector persistido en el navegador.
+- Subida local de avatares, fotografías de autores y portadas con validación de tamaño, extensión y firma del archivo.
 - Migraciones EF Core y datos de demo idempotentes.
 - Sin tests automáticos, según el alcance docente solicitado.
 
@@ -25,6 +27,7 @@ migraciones versionadas.
 - Dashboard inicial con estadísticas.
 - Listado de libros con búsqueda por texto, autor, categoría, disponibilidad y favoritos.
 - Ficha de libro con autor, categorías, sinopsis y reseñas.
+- Portadas de ejemplo para el catálogo y fotografías de ejemplo para los autores.
 - CRUD de libros, autores y categorías, protegido para administradores.
 - Registro, login por usuario o email, logout, bloqueo temporal tras intentos fallidos y roles `User` y `Admin`.
 - Perfil editable: nombre visible, email, avatar y cambio de contraseña.
@@ -38,9 +41,16 @@ migraciones versionadas.
 - Portadas de libros gestionadas desde el formulario de alta/edición.
 - Protección antiforgery automática para formularios POST.
 
-Las imágenes se guardan fuera de Git en `wwwroot/uploads/avatars` y
-`wwwroot/uploads/book-covers`. La base de datos solo almacena un nombre aleatorio
-generado por la aplicación, no la ruta ni el nombre original del archivo.
+Las imágenes subidas por usuarios se guardan fuera de Git en `wwwroot/uploads/avatars`,
+`wwwroot/uploads/author-photos` y `wwwroot/uploads/book-covers`. Las imágenes demo del
+catálogo se versionan para que el proyecto no aparezca vacío al clonarlo. La base de
+datos solo almacena un nombre generado por la aplicación, no la ruta ni el nombre
+original del archivo.
+
+Las fotografías y portadas demo están generadas para este proyecto de referencia y no
+pretenden sustituir fotografías de archivo ni portadas oficiales de editoriales. En un
+proyecto real se podrían reemplazar desde los formularios de administración respetando
+el mismo flujo de `IFormFile` + `IImageStorage`.
 
 La explicación guiada de las asociaciones, el flujo de una petición y el checklist
 para añadir una entidad está en [`docs/GUÍA-CÓDIGO.md`](docs/GUÍA-CÓDIGO.md).
@@ -94,6 +104,8 @@ Repositories/    # IRepository + consultas específicas con EF Core/LINQ
 Services/        # Casos de uso y reglas de negocio
 ViewModels/      # DTOs de formularios y páginas
 Views/           # Razor Views y layout común Bootstrap
+wwwroot/lib/     # Bootstrap y Font Awesome servidos localmente
+wwwroot/uploads/ # Imágenes demo versionadas y archivos subidos ignorados
 Utilities/       # Lógica pura reutilizable: ISBN, estadísticas y precios
 Data/Migrations/ # Historial versionado del esquema
 docs/           # Guías docentes del modelo y del flujo de una petición

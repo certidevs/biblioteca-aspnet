@@ -28,14 +28,19 @@ coverage/
 appsettings.Local.json
 secrets.json
 
-# Imágenes subidas localmente; solo se versionan las carpetas y sus .gitkeep
+# Imágenes subidas localmente; las imágenes demo se permiten explícitamente abajo
 wwwroot/uploads/*
 !wwwroot/uploads/avatars/
 !wwwroot/uploads/book-covers/
+!wwwroot/uploads/author-photos/
 wwwroot/uploads/avatars/*
 wwwroot/uploads/book-covers/*
+wwwroot/uploads/author-photos/*
 !wwwroot/uploads/avatars/.gitkeep
 !wwwroot/uploads/book-covers/.gitkeep
+!wwwroot/uploads/author-photos/.gitkeep
+!wwwroot/uploads/book-covers/demo-*.jpg
+!wwwroot/uploads/author-photos/demo-*.jpg
 
 # Logs and local environment files
 *.log
