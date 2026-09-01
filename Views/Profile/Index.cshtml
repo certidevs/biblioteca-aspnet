@@ -1,0 +1,114 @@
+@model ProfileViewModel
+@inject IImageStorage ImageStorage
+@{
+    ViewData["Title"] = "Mi perfil";
+    var profileName = Model.User.DisplayName ?? Model.User.UserName ?? "Usuario";
+    var profileInitial = string.IsNullOrWhiteSpace(profileName)
+        ? "U"
+        : profileName[..1].ToUpperInvariant();
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+    <div>
+        <span class="eyebrow">Cuenta</span>
+        <h1 class="h2 mt-1 mb-1">Mi perfil</h1>
+        <p class="text-secondary mb-0">Resumen de tu actividad en la biblioteca.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-primary" asp-action="Edit">Editar perfil</a>
+        <a class="btn btn-outline-secondary" asp-action="ChangePassword">Cambiar contraseña</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="stat-card h-100"><span class="stat-label">Favoritos</span><strong class="stat-number">@Model.FavoriteBooks.Count</strong></div></div>
+    <div class="col-md-3"><div class="stat-card h-100"><span class="stat-label">Reseñas</span><strong class="stat-number">@Model.Reviews.Count</strong></div></div>
+    <div class="col-md-3"><div class="stat-card h-100"><span class="stat-label">Compras</span><strong class="stat-number">@Model.Purchases.Count</strong></div></div>
+    <div class="col-md-3"><div class="stat-card h-100"><span class="stat-label">Gastado</span><strong class="stat-number fs-3">@Model.TotalSpent.ToString("C")</strong></div></div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <section class="detail-panel h-100">
+            <div class="d-flex align-items-center gap-3 mb-4">
+                @if (ImageStorage.GetUrl(ImageFolder.Avatars, Model.User.AvatarFileName) is string avatarUrl)
+                {
+                    <img class="avatar avatar-xl" src="@avatarUrl" alt="Avatar de @profileName" />
+                }
+                else
+                {
+                    <span class="avatar avatar-xl avatar-placeholder">@profileInitial</span>
+                }
+                <div>
+                    <h2 class="h4 mb-1">Datos de la cuenta</h2>
+                    <p class="text-secondary mb-0">Tu información personal y de acceso.</p>
+                </div>
+            </div>
+            <dl class="row book-meta mt-3 mb-0">
+                <dt class="col-5">Usuario</dt><dd class="col-7">@Model.User.UserName</dd>
+                <dt class="col-5">Nombre</dt><dd class="col-7">@(Model.User.DisplayName ?? "—")</dd>
+                <dt class="col-5">Email</dt><dd class="col-7">@Model.User.Email</dd>
+                <dt class="col-5">Alta</dt><dd class="col-7">@Model.User.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")</dd>
+            </dl>
+        </section>
+    </div>
+    <div class="col-lg-6">
+        <section class="detail-panel h-100">
+            <h2 class="h4">Mis favoritos</h2>
+            @if (Model.FavoriteBooks.Count == 0)
+            {
+                <p class="text-secondary mt-3 mb-0">Todavía no tienes favoritos.</p>
+            }
+            else
+            {
+                <ul class="list-group list-group-flush mt-3">
+                    @foreach (var book in Model.FavoriteBooks)
+                    {
+                        <li class="list-group-item px-0"><a asp-controller="Books" asp-action="Details" asp-route-id="@book.Id">@book.Title</a></li>
+                    }
+                </ul>
+            }
+        </section>
+    </div>
+    <div class="col-lg-6">
+        <section class="detail-panel h-100">
+            <h2 class="h4">Mis compras</h2>
+            @if (Model.Purchases.Count == 0)
+            {
+                <p class="text-secondary mt-3 mb-0">Todavía no tienes compras.</p>
+            }
+            else
+            {
+                <div class="table-responsive mt-3">
+                    <table class="table align-middle mb-0">
+                        <thead><tr><th>Libro</th><th>Fecha</th><th>Precio</th></tr></thead>
+                        <tbody>
+                            @foreach (var purchase in Model.Purchases)
+                            {
+                                <tr><td><a asp-controller="Books" asp-action="Details" asp-route-id="@purchase.BookId">@purchase.Book.Title</a></td><td>@purchase.PurchasedAt.ToLocalTime().ToString("dd/MM/yyyy")</td><td>@purchase.PriceAtPurchase.ToString("C")</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+    </div>
+    <div class="col-lg-6">
+        <section class="detail-panel h-100">
+            <h2 class="h4">Mis reseñas</h2>
+            @if (Model.Reviews.Count == 0)
+            {
+                <p class="text-secondary mt-3 mb-0">Todavía no has escrito reseñas.</p>
+            }
+            else
+            {
+                <ul class="list-group list-group-flush mt-3">
+                    @foreach (var review in Model.Reviews)
+                    {
+                        <li class="list-group-item px-0"><div class="d-flex justify-content-between"><a asp-controller="Books" asp-action="Details" asp-route-id="@review.BookId">@review.Book.Title</a><span class="rating">@(new string('★', review.Rating))</span></div><p class="small text-secondary mb-0 mt-1">@review.Comment</p></li>
+                    }
+                </ul>
+            }
+        </section>
+    </div>
+</div>

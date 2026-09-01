@@ -1,0 +1,88 @@
+@model BookFormViewModel
+@inject IImageStorage ImageStorage
+
+<div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+<div class="row g-3">
+    <div class="col-md-8">
+        <label asp-for="Title" class="form-label"></label>
+        <input asp-for="Title" class="form-control" />
+        <span asp-validation-for="Title" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="AuthorId" class="form-label"></label>
+        <select asp-for="AuthorId" class="form-select" asp-items="@(new SelectList(Model.Authors, nameof(Author.Id), nameof(Author.Name)))">
+            <option value="">Selecciona un autor</option>
+        </select>
+        <span asp-validation-for="AuthorId" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Price" class="form-label"></label>
+        <input asp-for="Price" class="form-control" step="0.01" />
+        <span asp-validation-for="Price" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="PublishDate" class="form-label"></label>
+        <input asp-for="PublishDate" class="form-control" />
+        <span asp-validation-for="PublishDate" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Language" class="form-label"></label>
+        <input asp-for="Language" class="form-control" />
+        <span asp-validation-for="Language" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Isbn" class="form-label"></label>
+        <input asp-for="Isbn" class="form-control" />
+        <span asp-validation-for="Isbn" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Pages" class="form-label"></label>
+        <input asp-for="Pages" class="form-control" />
+        <span asp-validation-for="Pages" class="text-danger"></span>
+    </div>
+    <div class="col-md-4 d-flex align-items-center pt-md-4">
+        <div class="form-check">
+            <input asp-for="Available" class="form-check-input" />
+            <label asp-for="Available" class="form-check-label"></label>
+        </div>
+    </div>
+    <div class="col-12">
+        <label asp-for="Synopsis" class="form-label"></label>
+        <textarea asp-for="Synopsis" class="form-control" rows="4"></textarea>
+        <span asp-validation-for="Synopsis" class="text-danger"></span>
+    </div>
+    <div class="col-12">
+        <label asp-for="CoverImage" class="form-label"></label>
+        <input asp-for="CoverImage" class="form-control" type="file" accept=".jpg,.jpeg,.png,.gif,.webp,image/jpeg,image/png,image/gif,image/webp" />
+        <div class="form-text">JPG, PNG, GIF o WEBP. Tamaño máximo: 5 MB.</div>
+        <span asp-validation-for="CoverImage" class="text-danger"></span>
+        @if (Model.CurrentCoverImageFileName is not null)
+        {
+            <div class="mt-3 d-flex align-items-center gap-3">
+                <img class="image-preview image-preview-sm" src="@ImageStorage.GetUrl(ImageFolder.BookCovers, Model.CurrentCoverImageFileName)" alt="Portada actual" />
+                <div>
+                    <p class="small text-secondary mb-2">Portada actual</p>
+                    <div class="form-check">
+                        <input asp-for="RemoveCoverImage" class="form-check-input" />
+                        <label asp-for="RemoveCoverImage" class="form-check-label"></label>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+    <div class="col-12">
+        <label class="form-label">Categorías</label>
+        <div class="row g-2">
+            @foreach (var category in Model.Categories)
+            {
+                var isSelected = Model.SelectedCategoryIds.Contains(category.Id);
+                <div class="col-sm-6 col-lg-3">
+                    <div class="form-check border rounded-3 p-2 ps-5">
+                        <input class="form-check-input" type="checkbox" name="SelectedCategoryIds" value="@category.Id" id="category-@category.Id" @(isSelected ? "checked" : null) />
+                        <label class="form-check-label" for="category-@category.Id">@category.Name</label>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

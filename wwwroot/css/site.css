@@ -1,0 +1,233 @@
+:root {
+    --app-ink: #122033;
+    --app-muted: #5e6b7e;
+    --app-border: #e5eaf1;
+    --app-primary: #2563eb;
+    --app-primary-dark: #4338ca;
+    --app-background: #f5f8fc;
+    --app-surface: #ffffff;
+}
+
+html {
+    font-size: 15px;
+    min-height: 100%;
+}
+
+body {
+    min-height: 100vh;
+    background: radial-gradient(circle at top left, #e8f1ff 0, transparent 35%), var(--app-background);
+    color: var(--app-ink);
+}
+
+a {
+    color: var(--app-primary);
+}
+
+.app-navbar {
+    background: linear-gradient(120deg, var(--app-primary-dark), var(--app-primary));
+    box-shadow: 0 10px 30px rgba(37, 99, 235, .18);
+}
+
+.brand-mark {
+    display: inline-grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    margin-right: .35rem;
+    border-radius: .55rem;
+    background: rgba(255, 255, 255, .18);
+}
+
+.hero-panel,
+.hero-action-card,
+.stat-card,
+.book-card,
+.form-panel,
+.detail-panel,
+.table-panel,
+.empty-state {
+    border: 1px solid var(--app-border);
+    border-radius: 1.25rem;
+    background: var(--app-surface);
+    box-shadow: 0 14px 36px rgba(18, 32, 51, .06);
+}
+
+.hero-panel {
+    background: linear-gradient(135deg, rgba(219, 234, 254, .88), rgba(238, 242, 255, .96));
+}
+
+.hero-action-card {
+    border-color: rgba(37, 99, 235, .12);
+    background: rgba(255, 255, 255, .78);
+}
+
+.eyebrow,
+.stat-label {
+    color: var(--app-primary);
+    font-size: .75rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.stat-card {
+    padding: 1.25rem;
+}
+
+.stat-number {
+    display: block;
+    margin: .35rem 0 .4rem;
+    font-size: 2.25rem;
+    line-height: 1;
+}
+
+.book-card {
+    overflow: hidden;
+    transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.book-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 18px 42px rgba(18, 32, 51, .11);
+}
+
+.book-cover {
+    display: grid;
+    place-items: center;
+    min-height: 115px;
+    background: linear-gradient(135deg, #dbeafe, #ede9fe);
+    font-size: 3rem;
+}
+
+.book-cover img {
+    display: block;
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+}
+
+.image-preview {
+    display: block;
+    border: 1px solid var(--app-border);
+    border-radius: .9rem;
+    object-fit: cover;
+}
+
+.image-preview-sm {
+    width: 84px;
+    height: 110px;
+}
+
+.avatar {
+    display: inline-grid;
+    flex: 0 0 auto;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #bfdbfe, #c4b5fd);
+    color: #312e81;
+    font-weight: 700;
+    object-fit: cover;
+}
+
+.avatar img,
+img.avatar {
+    object-fit: cover;
+}
+
+.avatar-xs {
+    width: 1.8rem;
+    height: 1.8rem;
+    font-size: .75rem;
+}
+
+.avatar-sm {
+    width: 2.5rem;
+    height: 2.5rem;
+    font-size: .9rem;
+}
+
+.avatar-lg {
+    width: 4rem;
+    height: 4rem;
+    font-size: 1.35rem;
+}
+
+.avatar-xl {
+    width: 5.5rem;
+    height: 5.5rem;
+    font-size: 1.8rem;
+}
+
+.avatar-placeholder {
+    background: linear-gradient(135deg, #dbeafe, #ede9fe);
+}
+
+.price-tag {
+    color: var(--app-primary-dark);
+    font-weight: 700;
+}
+
+.form-panel,
+.detail-panel,
+.table-panel,
+.empty-state {
+    padding: 1.5rem;
+}
+
+.table-panel {
+    overflow-x: auto;
+}
+
+.table > :not(caption) > * > * {
+    padding: .9rem .75rem;
+}
+
+.badge-soft {
+    display: inline-block;
+    padding: .35rem .6rem;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: #4338ca;
+    font-size: .75rem;
+    font-weight: 600;
+}
+
+.book-meta dt {
+    color: var(--app-muted);
+    font-size: .8rem;
+    font-weight: 600;
+}
+
+.book-meta dd {
+    margin-bottom: .8rem;
+}
+
+.rating {
+    color: #f59e0b;
+    letter-spacing: .08em;
+}
+
+.empty-state {
+    padding: 4rem 1.5rem;
+}
+
+.btn {
+    border-radius: .7rem;
+}
+
+.form-control,
+.form-select {
+    border-radius: .7rem;
+    border-color: #d7dfeb;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 .25rem rgba(59, 130, 246, .13);
+}
+
+footer {
+    color: var(--app-muted);
+}

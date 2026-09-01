@@ -1,0 +1,141 @@
+@model Book
+@inject IImageStorage ImageStorage
+@{
+    ViewData["Title"] = Model.Title;
+    var currentUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+    var isFavorite = User.Identity?.IsAuthenticated == true && Model.FavoriteUsers.Any(user => user.UserName == User.Identity!.Name);
+}
+
+<div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+    <div>
+        <a class="small text-decoration-none" asp-action="Index">← Volver al catálogo</a>
+        <h1 class="h2 mt-2 mb-1">@Model.Title</h1>
+        <p class="text-secondary mb-0">por <a asp-controller="Authors" asp-action="Details" asp-route-id="@Model.AuthorId">@Model.Author.Name</a></p>
+    </div>
+    <span class="badge @(Model.Available ? "text-bg-success" : "text-bg-secondary") mt-2">@(Model.Available ? "Disponible" : "No disponible")</span>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <section class="detail-panel h-100">
+            <div class="row g-4">
+                <div class="col-sm-4">
+                    <div class="book-cover rounded-4">
+                        @if (ImageStorage.GetUrl(ImageFolder.BookCovers, Model.CoverImageFileName) is string coverUrl)
+                        {
+                            <img src="@coverUrl" alt="Portada de @Model.Title" />
+                        }
+                        else
+                        {
+                            <span aria-hidden="true">📖</span>
+                        }
+                    </div>
+                    <div class="text-center mt-3">
+                        <div class="price-tag fs-4">@Model.Price.ToString("C")</div>
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <form asp-action="ToggleFavorite" method="post" class="mt-2">
+                                <input type="hidden" name="id" value="@Model.Id" />
+                                <input type="hidden" name="returnUrl" value="@currentUrl" />
+                                <button class="btn btn-sm btn-outline-warning" type="submit">@(isFavorite ? "★ Quitar favorito" : "☆ Añadir a favorito")</button>
+                            </form>
+                        }
+                    </div>
+                </div>
+                <div class="col-sm-8">
+                    <h2 class="h5">Sinopsis</h2>
+                    <p class="text-secondary">@(string.IsNullOrWhiteSpace(Model.Synopsis) ? "Este libro todavía no tiene sinopsis." : Model.Synopsis)</p>
+
+                    <dl class="row book-meta mt-4">
+                        <dt class="col-5">ISBN</dt>
+                        <dd class="col-7">@(Model.Isbn ?? "—")</dd>
+                        <dt class="col-5">Páginas</dt>
+                        <dd class="col-7">@(Model.Pages?.ToString() ?? "—")</dd>
+                        <dt class="col-5">Idioma</dt>
+                        <dd class="col-7">@(Model.Language ?? "—")</dd>
+                        <dt class="col-5">Publicación</dt>
+                        <dd class="col-7">@(Model.PublishDate?.ToString("dd/MM/yyyy") ?? "—")</dd>
+                    </dl>
+
+                    @if (User.Identity?.IsAuthenticated == true && Model.Available)
+                    {
+                        <form asp-action="Buy" method="post" class="mt-3">
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <button class="btn btn-primary" type="submit">Comprar por @Model.Price.ToString("C")</button>
+                        </form>
+                    }
+                    @if (User.IsInRole(RoleNames.Admin))
+                    {
+                        <div class="d-flex gap-2 mt-4 pt-3 border-top">
+                            <a class="btn btn-sm btn-outline-primary" asp-action="Edit" asp-route-id="@Model.Id">Editar</a>
+                            <a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-route-id="@Model.Id">Eliminar</a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </section>
+    </div>
+    <div class="col-lg-4">
+        <section class="detail-panel h-100">
+            <h2 class="h5">Categorías</h2>
+            <div class="mb-4">
+                @foreach (var category in Model.Categories)
+                {
+                    <a class="badge-soft text-decoration-none me-1 mb-1" asp-controller="Categories" asp-action="Details" asp-route-id="@category.Id">@category.Name</a>
+                }
+            </div>
+            <h2 class="h5">Sobre el autor</h2>
+            <p class="fw-semibold mb-1">@Model.Author.Name</p>
+            <p class="small text-secondary">@(Model.Author.Bio ?? "Sin biografía disponible.")</p>
+            <a class="btn btn-sm btn-outline-primary" asp-controller="Authors" asp-action="Details" asp-route-id="@Model.AuthorId">Ver autor</a>
+        </section>
+    </div>
+</div>
+
+<section class="mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <span class="eyebrow">Opiniones</span>
+            <h2 class="h3 mt-1 mb-0">Reseñas (@Model.Reviews.Count)</h2>
+        </div>
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <a class="btn btn-primary" asp-controller="Reviews" asp-action="Create" asp-route-bookId="@Model.Id">Escribir reseña</a>
+        }
+    </div>
+
+    @if (Model.Reviews.Count == 0)
+    {
+        <div class="empty-state text-center py-5">
+            <p class="text-secondary mb-0">Todavía no hay reseñas para este libro.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var review in Model.Reviews.OrderByDescending(review => review.CreatedAt))
+            {
+                <div class="col-md-6">
+                    <article class="detail-panel h-100">
+                        <div class="d-flex justify-content-between gap-2">
+                            <strong>@(review.User.DisplayName ?? review.User.UserName)</strong>
+                            <span class="rating" title="@review.Rating de 5">@(new string('★', review.Rating))@(new string('☆', 5 - review.Rating))</span>
+                        </div>
+                        <p class="small text-secondary mt-1">@review.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")</p>
+                        <p class="mb-0">@review.Comment</p>
+                        @if (User.IsInRole(RoleNames.Admin) || review.User.UserName == User.Identity?.Name)
+                        {
+                            <div class="mt-3 d-flex gap-2">
+                                <a class="btn btn-sm btn-outline-secondary" asp-controller="Reviews" asp-action="Edit" asp-route-id="@review.Id">Editar</a>
+                                <form asp-controller="Reviews" asp-action="Delete" method="post">
+                                    <input type="hidden" name="id" value="@review.Id" />
+                                    <button class="btn btn-sm btn-outline-danger" type="submit">Eliminar</button>
+                                </form>
+                            </div>
+                        }
+                    </article>
+                </div>
+            }
+        </div>
+    }
+</section>

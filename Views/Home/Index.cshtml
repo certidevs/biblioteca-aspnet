@@ -1,0 +1,87 @@
+@model DashboardViewModel
+@inject IImageStorage ImageStorage
+@{
+    ViewData["Title"] = "Inicio";
+}
+
+<section class="hero-panel p-4 p-lg-5 mb-4">
+    <div class="row align-items-center g-4">
+        <div class="col-lg-8">
+            <span class="eyebrow">Proyecto de referencia</span>
+            <h1 class="display-5 fw-bold mt-2">Biblioteca Digital</h1>
+            <p class="lead mb-3">Una aplicación web completa para aprender ASP.NET Core MVC, C#, EF Core, Identity y vistas Razor.</p>
+            <p class="text-secondary mb-0">La arquitectura sigue el flujo Controlador → Servicio → Repositorio → Base de datos, equivalente al proyecto Java con Spring Boot.</p>
+        </div>
+        <div class="col-lg-4">
+            <div class="hero-action-card p-4">
+                <h2 class="h5">Empieza por aquí</h2>
+                <p class="small text-secondary">Explora el catálogo y después inicia sesión para probar favoritos, compras y reseñas.</p>
+                <div class="d-grid gap-2">
+                    <a class="btn btn-primary" asp-controller="Books" asp-action="Index">Entrar al catálogo</a>
+                    <a class="btn btn-outline-primary" asp-controller="Reviews" asp-action="Index">Leer reseñas</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card h-100">
+            <span class="stat-label">Libros</span>
+            <strong class="stat-number">@Model.BookCount</strong>
+            <p class="text-secondary mb-0">Catálogo con filtros, detalle, compra y favoritos.</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card h-100">
+            <span class="stat-label">Autores</span>
+            <strong class="stat-number">@Model.AuthorCount</strong>
+            <p class="text-secondary mb-0">Fichas de autor y libros relacionados.</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card h-100">
+            <span class="stat-label">Categorías</span>
+            <strong class="stat-number">@Model.CategoryCount</strong>
+            <p class="text-secondary mb-0">Organización del catálogo mediante una relación N:M.</p>
+        </div>
+    </div>
+</div>
+
+<section class="section-heading d-flex justify-content-between align-items-end mb-3">
+    <div>
+        <span class="eyebrow">Selección de la biblioteca</span>
+        <h2 class="h3 mt-1 mb-0">Libros destacados</h2>
+    </div>
+    <a class="btn btn-sm btn-outline-secondary" asp-controller="Books" asp-action="Index">Ver todos</a>
+</section>
+
+<div class="row g-3">
+    @foreach (var book in Model.FeaturedBooks)
+    {
+        <div class="col-md-4">
+            <article class="book-card h-100">
+                <div class="book-cover">
+                    @if (ImageStorage.GetUrl(ImageFolder.BookCovers, book.CoverImageFileName) is string coverUrl)
+                    {
+                        <img src="@coverUrl" alt="Portada de @book.Title" />
+                    }
+                    else
+                    {
+                        <span aria-hidden="true">📖</span>
+                    }
+                </div>
+                <div class="p-3">
+                    <h3 class="h5 mb-1"><a class="link-dark text-decoration-none" asp-controller="Books" asp-action="Details" asp-route-id="@book.Id">@book.Title</a></h3>
+                    <p class="text-secondary small mb-2">@book.Author.Name</p>
+                    <p class="small text-secondary mb-3">@book.Synopsis</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="price-tag">@book.Price.ToString("C")</span>
+                        <a class="btn btn-sm btn-outline-primary" asp-controller="Books" asp-action="Details" asp-route-id="@book.Id">Ver detalle</a>
+                    </div>
+                </div>
+            </article>
+        </div>
+    }
+</div>

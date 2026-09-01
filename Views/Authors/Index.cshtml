@@ -1,0 +1,53 @@
+@model List<Author>
+@{
+    ViewData["Title"] = "Autores";
+    var search = ViewData["Search"] as string;
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+    <div>
+        <span class="eyebrow">Catálogo</span>
+        <h1 class="h2 mt-1 mb-1">Autores</h1>
+        <p class="text-secondary mb-0">Consulta autores y navega hasta sus libros.</p>
+    </div>
+    @if (User.IsInRole(RoleNames.Admin))
+    {
+        <a class="btn btn-primary" asp-action="Create">+ Nuevo autor</a>
+    }
+</div>
+
+<form class="form-panel mb-4" method="get">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-10">
+            <label class="form-label" for="search">Buscar por nombre o nacionalidad</label>
+            <input class="form-control" id="search" name="search" value="@search" />
+        </div>
+        <div class="col-md-2 d-grid">
+            <button class="btn btn-primary" type="submit">Buscar</button>
+        </div>
+    </div>
+</form>
+
+@if (Model.Count == 0)
+{
+    <div class="empty-state text-center"><p class="text-secondary mb-0">No hay autores que coincidan.</p></div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var author in Model)
+        {
+            <div class="col-md-6 col-xl-4">
+                <article class="detail-panel h-100">
+                    <div class="d-flex justify-content-between gap-2">
+                        <h2 class="h5 mb-1">@author.Name</h2>
+                        <span class="badge-soft">@author.Books.Count libro(s)</span>
+                    </div>
+                    <p class="small text-secondary mb-2">@(author.Nationality ?? "Nacionalidad no indicada")</p>
+                    <p class="small text-secondary">@(author.Bio ?? "Sin biografía disponible.")</p>
+                    <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@author.Id">Ver ficha</a>
+                </article>
+            </div>
+        }
+    </div>
+}

@@ -1,0 +1,31 @@
+@model List<Category>
+@{
+    ViewData["Title"] = "Categorías";
+    var search = ViewData["Search"] as string;
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+    <div><span class="eyebrow">Catálogo</span><h1 class="h2 mt-1 mb-1">Categorías</h1><p class="text-secondary mb-0">Organiza y descubre libros mediante etiquetas.</p></div>
+    @if (User.IsInRole(RoleNames.Admin)) { <a class="btn btn-primary" asp-action="Create">+ Nueva categoría</a> }
+</div>
+
+<form class="form-panel mb-4" method="get"><div class="row g-2 align-items-end"><div class="col-md-10"><label class="form-label" for="search">Buscar</label><input class="form-control" id="search" name="search" value="@search" placeholder="Nombre o descripción" /></div><div class="col-md-2 d-grid"><button class="btn btn-primary" type="submit">Buscar</button></div></div></form>
+
+@if (Model.Count == 0)
+{
+    <div class="empty-state text-center"><p class="text-secondary mb-0">No hay categorías que coincidan.</p></div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var category in Model)
+        {
+            <div class="col-md-6 col-xl-3"><article class="detail-panel h-100">
+                <span class="badge-soft mb-3" style="background-color:@(category.Color ?? "#eef2ff")">@category.Name</span>
+                <p class="small text-secondary">@(category.Description ?? "Sin descripción disponible.")</p>
+                <p class="small mb-3">@category.Books.Count libro(s)</p>
+                <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@category.Id">Ver categoría</a>
+            </article></div>
+        }
+    </div>
+}

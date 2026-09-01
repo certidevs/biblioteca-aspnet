@@ -1,0 +1,25 @@
+@model BookFormViewModel
+@{
+    ViewData["Title"] = "Nuevo libro";
+}
+
+<div class="row justify-content-center">
+    <div class="col-xl-9">
+        <div class="form-panel">
+            <span class="eyebrow">Administración</span>
+            <h1 class="h2 mt-1">Nuevo libro</h1>
+            <p class="text-secondary">Completa los datos del libro y asígnalo a un autor y a una o varias categorías.</p>
+            <form asp-action="Create" method="post" enctype="multipart/form-data">
+                <partial name="_Form" model="Model" />
+                <div class="d-flex gap-2 mt-4">
+                    <button class="btn btn-primary" type="submit">Guardar libro</button>
+                    <a class="btn btn-outline-secondary" asp-action="Index">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

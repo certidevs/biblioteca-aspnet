@@ -1,0 +1,26 @@
+@model List<Review>
+@{
+    ViewData["Title"] = "Reseñas";
+    var selectedRating = ViewData["Rating"] as int?;
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4"><div><span class="eyebrow">Comunidad</span><h1 class="h2 mt-1 mb-1">Reseñas</h1><p class="text-secondary mb-0">Opiniones de lectores sobre los libros del catálogo.</p></div></div>
+
+<form class="form-panel mb-4" method="get"><div class="row g-2 align-items-end"><div class="col-md-10"><label class="form-label" for="rating">Filtrar por puntuación</label><select class="form-select" id="rating" name="rating"><option value="">Todas las puntuaciones</option>@for (var value = 5; value >= 1; value--)
+{
+    if (selectedRating == value) { <option value="@value" selected>@value estrellas</option> } else { <option value="@value">@value estrellas</option> }
+}</select></div><div class="col-md-2 d-grid"><button class="btn btn-primary" type="submit">Filtrar</button></div></div></form>
+
+@if (Model.Count == 0)
+{
+    <div class="empty-state text-center"><p class="text-secondary mb-0">No hay reseñas para este filtro.</p></div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var review in Model)
+        {
+            <div class="col-md-6"><article class="detail-panel h-100"><div class="d-flex justify-content-between gap-2"><h2 class="h5 mb-0"><a class="link-dark text-decoration-none" asp-controller="Books" asp-action="Details" asp-route-id="@review.BookId">@review.Book.Title</a></h2><span class="rating">@(new string('★', review.Rating))@(new string('☆', 5 - review.Rating))</span></div><p class="small text-secondary mt-2 mb-2">Por @(review.User.DisplayName ?? review.User.UserName) · @review.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")</p><p class="mb-0">@review.Comment</p></article></div>
+        }
+    </div>
+}

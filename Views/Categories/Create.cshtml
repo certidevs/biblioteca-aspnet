@@ -1,0 +1,8 @@
+@model CategoryFormViewModel
+@{
+    ViewData["Title"] = "Nueva categoría";
+}
+
+<div class="row justify-content-center"><div class="col-xl-8"><div class="form-panel"><span class="eyebrow">Administración</span><h1 class="h2 mt-1">Nueva categoría</h1><form asp-action="Create" method="post"><partial name="_Form" model="Model" /><div class="d-flex gap-2 mt-4"><button class="btn btn-primary" type="submit">Guardar categoría</button><a class="btn btn-outline-secondary" asp-action="Index">Cancelar</a></div></form></div></div></div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

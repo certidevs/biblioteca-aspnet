@@ -1,0 +1,44 @@
+@model LoginViewModel
+@{
+    ViewData["Title"] = "Iniciar sesión";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="form-panel p-4 p-lg-5">
+            <span class="eyebrow">Cuenta</span>
+            <h1 class="h2 mt-2">Iniciar sesión</h1>
+            <p class="text-secondary">Accede a tus favoritos, compras y reseñas.</p>
+
+            @if (ViewData["LoggedOut"] is true)
+            {
+                <div class="alert alert-success">Has cerrado sesión correctamente.</div>
+            }
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+            <form asp-action="Login" method="post">
+                <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+                <div class="mb-3">
+                    <label asp-for="Username" class="form-label"></label>
+                    <input asp-for="Username" class="form-control" autofocus />
+                    <span asp-validation-for="Username" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Password" class="form-label"></label>
+                    <input asp-for="Password" class="form-control" />
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
+                <div class="form-check mb-4">
+                    <input asp-for="RememberMe" class="form-check-input" />
+                    <label asp-for="RememberMe" class="form-check-label"></label>
+                </div>
+                <button class="btn btn-primary w-100" type="submit">Entrar</button>
+            </form>
+            <p class="small text-secondary mt-4 mb-0">¿No tienes cuenta? <a asp-action="Register">Regístrate</a></p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
