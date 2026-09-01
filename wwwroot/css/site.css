@@ -1,6 +1,6 @@
 :root {
     --app-ink: #172033;
-    --app-muted: #667085;
+    --app-muted: #536174;
     --app-soft: #f7f8fc;
     --app-surface: #ffffff;
     --app-border: #e5e7ef;
@@ -205,8 +205,12 @@ a:hover {
 
 .page-subtitle {
     max-width: 48rem;
-    color: var(--app-muted);
+    color: #536174;
     font-size: 1.04rem;
+}
+
+.text-secondary {
+    color: #475467 !important;
 }
 
 .hero-panel {
@@ -528,7 +532,7 @@ a:hover {
 }
 
 .form-text {
-    color: var(--app-muted);
+    color: #475467;
 }
 
 .form-section + .form-section {
@@ -609,7 +613,12 @@ a:hover {
 }
 
 .book-card .p-3 {
-    flex: 1 1 auto;
+    flex: 0 1 auto;
+}
+
+.book-card.h-100,
+.book-card > .p-3.h-100 {
+    height: auto !important;
 }
 
 .book-card h2 a,
@@ -656,7 +665,21 @@ a:hover {
     border-radius: .45rem .75rem .75rem .45rem;
     background: rgba(255, 255, 255, .4);
     box-shadow: .35rem .35rem 0 rgba(87, 87, 214, .1);
-    font-size: 2.1rem;
+    font-size: 0;
+}
+
+.book-cover > span[aria-hidden="true"]::before {
+    color: var(--app-primary-dark);
+    content: "B";
+    font-size: 2.25rem;
+    font-weight: 850;
+    letter-spacing: -.08em;
+}
+
+.book-status {
+    font-size: .75rem !important;
+    font-weight: 750;
+    line-height: 1.2;
 }
 
 .book-cover.rounded-4,
@@ -665,7 +688,9 @@ a:hover {
 }
 
 .book-card .book-cover {
-    min-height: 15rem;
+    height: 15rem;
+    min-height: 0;
+    aspect-ratio: auto;
 }
 
 .price-tag {
@@ -724,7 +749,7 @@ a:hover {
 }
 
 .category-count {
-    color: var(--app-muted);
+    color: #475467;
     font-size: .82rem;
     font-weight: 650;
 }

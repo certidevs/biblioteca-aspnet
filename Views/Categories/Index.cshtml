@@ -55,7 +55,7 @@ else
                         <span class="badge-soft" style="background-color:@color; color:@ColorContrast.TextColor(category.Color)">@category.Name</span>
                         <span class="category-count">@category.Books.Count</span>
                     </div>
-                    <p class="small text-secondary flex-grow-1">@(category.Description ?? "Sin descripción disponible.")</p>
+                    <p class="small text-secondary">@(category.Description ?? "Sin descripción disponible.")</p>
                     <div class="d-flex justify-content-between align-items-center gap-2 mt-4">
                         <span class="category-count">libro(s)</span>
                         <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@category.Id">Ver categoría <span aria-hidden="true">↗</span></a>

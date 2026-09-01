@@ -57,7 +57,7 @@ else
                         <span class="badge-soft">@author.Books.Count</span>
                     </div>
                     <p class="small text-secondary mt-3 mb-2">@(author.Nationality ?? "Nacionalidad no indicada")</p>
-                    <p class="small text-secondary flex-grow-1">@(author.Bio ?? "Sin biografía disponible.")</p>
+                    <p class="small text-secondary">@(author.Bio ?? "Sin biografía disponible.")</p>
                     <div class="d-flex justify-content-between align-items-center gap-2 mt-3 pt-3 border-top">
                         <span class="category-count">libro(s)</span>
                         <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@author.Id">Ver ficha <span aria-hidden="true">↗</span></a>

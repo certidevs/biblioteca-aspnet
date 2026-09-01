@@ -42,6 +42,8 @@ public static class DbInitializer
 
         if (await context.Authors.AnyAsync())
         {
+            await EnsureMinimumDemoBooksAsync(context);
+
             // Si se parte de una BD creada antes de introducir pedidos y no había
             // compras históricas, deja igualmente una compra demo disponible.
             if (!await context.Orders.AnyAsync())
@@ -163,6 +165,32 @@ public static class DbInitializer
                 Synopsis = "Una novela contemporánea sobre libros, memoria y el poder de las historias.",
                 Author = austen,
                 Categories = new List<Category> { novela }
+            },
+            new Book
+            {
+                Title = "El amor en los tiempos del cólera",
+                Price = 19.50m,
+                Available = true,
+                PublishDate = new DateTime(1985, 9, 1),
+                Isbn = "9780307389732",
+                Pages = 368,
+                Language = "Español",
+                Synopsis = "Una historia de amor, espera y segundas oportunidades a lo largo de varias décadas.",
+                Author = garciaMarquez,
+                Categories = new List<Category> { novela, realismoMagico }
+            },
+            new Book
+            {
+                Title = "Sentido y sensibilidad",
+                Price = 15.25m,
+                Available = true,
+                PublishDate = new DateTime(1811, 10, 30),
+                Isbn = "9780141439662",
+                Pages = 384,
+                Language = "Español",
+                Synopsis = "Las hermanas Dashwood afrontan el amor, la pérdida y las normas de la sociedad de su tiempo.",
+                Author = austen,
+                Categories = new List<Category> { novela, clasico }
             }
         };
 
@@ -188,6 +216,71 @@ public static class DbInitializer
         });
         context.Orders.Add(CreateDemoOrder(user.Id, books[0], DateTime.UtcNow.AddDays(-2)));
         await context.SaveChangesAsync();
+    }
+
+    private static async Task EnsureMinimumDemoBooksAsync(ApplicationDbContext context)
+    {
+        if (await context.Books.CountAsync() >= 6)
+        {
+            return;
+        }
+
+        var garciaMarquez = await context.Authors
+            .FirstOrDefaultAsync(author => author.Name == "Gabriel García Márquez");
+        var austen = await context.Authors
+            .FirstOrDefaultAsync(author => author.Name == "Jane Austen");
+        var novela = await context.Categories
+            .FirstOrDefaultAsync(category => category.Name == "Novela");
+        var realismoMagico = await context.Categories
+            .FirstOrDefaultAsync(category => category.Name == "Realismo mágico");
+        var clasico = await context.Categories
+            .FirstOrDefaultAsync(category => category.Name == "Clásico");
+
+        if (garciaMarquez is null || austen is null || novela is null || realismoMagico is null || clasico is null)
+        {
+            return;
+        }
+
+        var additionalBooks = new List<Book>();
+        if (!await context.Books.AnyAsync(book => book.Title == "El amor en los tiempos del cólera"))
+        {
+            additionalBooks.Add(new Book
+            {
+                Title = "El amor en los tiempos del cólera",
+                Price = 19.50m,
+                Available = true,
+                PublishDate = new DateTime(1985, 9, 1),
+                Isbn = "9780307389732",
+                Pages = 368,
+                Language = "Español",
+                Synopsis = "Una historia de amor, espera y segundas oportunidades a lo largo de varias décadas.",
+                Author = garciaMarquez,
+                Categories = new List<Category> { novela, realismoMagico }
+            });
+        }
+
+        if (!await context.Books.AnyAsync(book => book.Title == "Sentido y sensibilidad"))
+        {
+            additionalBooks.Add(new Book
+            {
+                Title = "Sentido y sensibilidad",
+                Price = 15.25m,
+                Available = true,
+                PublishDate = new DateTime(1811, 10, 30),
+                Isbn = "9780141439662",
+                Pages = 384,
+                Language = "Español",
+                Synopsis = "Las hermanas Dashwood afrontan el amor, la pérdida y las normas de la sociedad de su tiempo.",
+                Author = austen,
+                Categories = new List<Category> { novela, clasico }
+            });
+        }
+
+        if (additionalBooks.Count > 0)
+        {
+            context.Books.AddRange(additionalBooks);
+            await context.SaveChangesAsync();
+        }
     }
 
     private static Order CreateDemoOrder(
