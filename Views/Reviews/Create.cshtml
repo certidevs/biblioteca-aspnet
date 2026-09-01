@@ -3,6 +3,6 @@
     ViewData["Title"] = "Escribir reseña";
 }
 
-<div class="row justify-content-center"><div class="col-lg-7"><div class="form-panel"><span class="eyebrow">Comunidad</span><h1 class="h2 mt-1">Escribir reseña</h1><p class="text-secondary">Libro: <strong>@Model.BookTitle</strong></p><form asp-action="Create" method="post"><partial name="_Form" model="Model" /><div class="d-flex gap-2 mt-4"><button class="btn btn-primary" type="submit">Publicar reseña</button><a class="btn btn-outline-secondary" asp-controller="Books" asp-action="Details" asp-route-id="@Model.BookId">Cancelar</a></div></form></div></div></div>
+<div class="row justify-content-center"><div class="col-lg-7"><div class="form-panel"><span class="eyebrow">Comunidad</span><h1 class="page-title">Escribir reseña</h1><p class="page-subtitle">Comparte tu opinión sobre <strong>@Model.BookTitle</strong> con el resto de lectores.</p><form asp-action="Create" method="post"><partial name="_Form" model="Model" /><div class="d-flex flex-wrap gap-2 mt-4"><button class="btn btn-primary" type="submit">Publicar reseña</button><a class="btn btn-outline-secondary" asp-controller="Books" asp-action="Details" asp-route-id="@Model.BookId">Cancelar</a></div></form></div></div></div>
 
 @section Scripts { <partial name="_ValidationScriptsPartial" /> }

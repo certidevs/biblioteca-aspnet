@@ -3,25 +3,36 @@
 @{
     ViewData["Title"] = "Libros";
     var currentUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+    var hasFilters = !string.IsNullOrWhiteSpace(Model.Search)
+        || Model.AuthorId.HasValue
+        || Model.CategoryId.HasValue
+        || Model.Available.HasValue
+        || Model.FavoritesOnly;
 }
 
-<div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+<header class="page-header d-flex flex-wrap justify-content-between align-items-end gap-3">
     <div>
         <span class="eyebrow">Catálogo</span>
-        <h1 class="h2 mt-1 mb-1">Libros</h1>
-        <p class="text-secondary mb-0">Busca por título, autor o categoría y abre la ficha de cada libro.</p>
+        <h1 class="page-title">Libros</h1>
+        <p class="page-subtitle mb-0">Descubre nuevas historias, filtra por autor o categoría y guarda tus favoritas.</p>
     </div>
-    @if (User.IsInRole(RoleNames.Admin))
-    {
-        <a class="btn btn-primary" asp-action="Create">+ Nuevo libro</a>
-    }
-</div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge-soft">@Model.Books.Count resultado(s)</span>
+        @if (User.IsInRole(RoleNames.Admin))
+        {
+            <a class="btn btn-primary" asp-action="Create"><span aria-hidden="true">＋</span> Nuevo libro</a>
+        }
+    </div>
+</header>
 
-<form class="form-panel mb-4" method="get">
+<form class="search-panel p-3 p-lg-4 mb-4" method="get">
     <div class="row g-3 align-items-end">
-        <div class="col-lg-4">
-            <label class="form-label" for="search">Texto</label>
-            <input class="form-control" id="search" name="search" value="@Model.Search" placeholder="Título o autor" />
+        <div class="col-lg-5">
+            <label class="form-label" for="search">Buscar en el catálogo</label>
+            <div class="input-group">
+                <span class="input-group-text bg-white border-end-0" aria-hidden="true">⌕</span>
+                <input class="form-control border-start-0 ps-0" id="search" name="search" value="@Model.Search" placeholder="Título o autor" />
+            </div>
         </div>
         <div class="col-md-4 col-lg-2">
             <label class="form-label" for="authorId">Autor</label>
@@ -79,36 +90,47 @@
                 }
             </select>
         </div>
-        <div class="col-lg-2 d-grid">
+        <div class="col-lg-1 d-grid">
             <button class="btn btn-primary" type="submit">Filtrar</button>
         </div>
     </div>
-    @if (User.Identity?.IsAuthenticated == true)
-    {
-        <div class="form-check mt-3">
-            <input class="form-check-input" type="checkbox" id="favoritesOnly" name="favoritesOnly" value="true" @(Model.FavoritesOnly ? "checked" : null) />
-            <label class="form-check-label" for="favoritesOnly">Mostrar solo mis favoritos</label>
-        </div>
-    }
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mt-3 pt-3 border-top">
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="favoritesOnly" name="favoritesOnly" value="true" @(Model.FavoritesOnly ? "checked" : null) />
+                <label class="form-check-label" for="favoritesOnly">Mostrar solo mis favoritos</label>
+            </div>
+        }
+        else
+        {
+            <span class="small text-secondary">Inicia sesión para guardar favoritos y añadir libros al carrito.</span>
+        }
+        @if (hasFilters)
+        {
+            <a class="small text-decoration-none" asp-action="Index">Limpiar filtros</a>
+        }
+    </div>
 </form>
 
 @if (Model.Books.Count == 0)
 {
     <div class="empty-state text-center">
-        <h2 class="h4">No hay libros que coincidan</h2>
+        <div class="empty-icon mx-auto" aria-hidden="true">⌕</div>
+        <h2 class="h4 mt-3">No hay libros que coincidan</h2>
         <p class="text-secondary">Prueba a quitar algún filtro o vuelve al catálogo completo.</p>
         <a class="btn btn-outline-primary" asp-action="Index">Limpiar filtros</a>
     </div>
 }
 else
 {
-    <div class="row g-3">
+    <div class="row g-4">
         @foreach (var book in Model.Books)
         {
             var isFavorite = Model.CurrentUserId is not null && book.FavoriteUsers.Any(user => user.Id == Model.CurrentUserId);
             <div class="col-md-6 col-xl-4">
                 <article class="book-card h-100">
-                    <div class="book-cover">
+                    <div class="book-cover position-relative">
                         @if (ImageStorage.GetUrl(ImageFolder.BookCovers, book.CoverImageFileName) is string coverUrl)
                         {
                             <img src="@coverUrl" alt="Portada de @book.Title" />
@@ -117,36 +139,39 @@ else
                         {
                             <span aria-hidden="true">📖</span>
                         }
+                        <span class="book-status badge rounded-pill @(book.Available ? "text-bg-success" : "text-bg-secondary") position-absolute top-0 end-0 m-3">@(book.Available ? "Disponible" : "Agotado")</span>
                     </div>
-                    <div class="p-3 d-flex flex-column h-100">
+                    <div class="p-3 p-lg-4 d-flex flex-column h-100">
                         <div class="d-flex justify-content-between gap-2 align-items-start">
-                            <h2 class="h5 mb-1"><a class="link-dark text-decoration-none" asp-action="Details" asp-route-id="@book.Id">@book.Title</a></h2>
+                            <div>
+                                <span class="small text-uppercase text-secondary fw-bold">Libro</span>
+                                <h2 class="h5 mt-1 mb-1"><a class="link-dark text-decoration-none" asp-action="Details" asp-route-id="@book.Id">@book.Title</a></h2>
+                            </div>
                             @if (isFavorite)
                             {
-                                <span title="Favorito" aria-label="Favorito">⭐</span>
+                                <span class="text-warning" title="Favorito" aria-label="Favorito">★</span>
                             }
                         </div>
-                        <p class="text-secondary small mb-2">@book.Author.Name</p>
-                        <div class="mb-3">
-                            @foreach (var category in book.Categories)
+                        <p class="text-secondary small mb-3">@book.Author.Name</p>
+                        <div class="d-flex flex-wrap gap-1 mb-3">
+                            @foreach (var category in book.Categories.Take(3))
                             {
-                                <span class="badge-soft me-1 mb-1" style="background-color:@ColorContrast.NormalizeHex(category.Color); color:@ColorContrast.TextColor(category.Color)">@category.Name</span>
+                                <span class="badge-soft" style="background-color:@ColorContrast.NormalizeHex(category.Color); color:@ColorContrast.TextColor(category.Color)">@category.Name</span>
                             }
                         </div>
-                        <p class="small text-secondary flex-grow-1">@book.Synopsis</p>
-                        <div class="d-flex justify-content-between align-items-center mt-2">
-                            <span class="price-tag">@book.Price.ToString("C")</span>
-                            <span class="badge @(book.Available ? "text-bg-success" : "text-bg-secondary")">@(book.Available ? "Disponible" : "No disponible")</span>
+                        <p class="small text-secondary flex-grow-1 mb-4">@book.Synopsis</p>
+                        <div class="d-flex justify-content-between align-items-center gap-2">
+                            <span class="price-tag fs-5">@book.Price.ToString("C")</span>
+                            <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@book.Id">Ver detalle <span aria-hidden="true">↗</span></a>
                         </div>
                         <div class="d-flex flex-wrap gap-2 mt-3">
-                            <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@book.Id">Ver detalle</a>
                             @if (User.Identity?.IsAuthenticated == true && book.Available)
                             {
                                 <form asp-action="AddToCart" method="post" class="flex-grow-1">
                                     <input type="hidden" name="id" value="@book.Id" />
                                     <input type="hidden" name="quantity" value="1" />
                                     <input type="hidden" name="returnUrl" value="@currentUrl" />
-                                    <button class="btn btn-sm btn-primary w-100" type="submit"><span aria-hidden="true">🛒</span> Añadir</button>
+                                    <button class="btn btn-sm btn-primary w-100" type="submit"><span aria-hidden="true">🛒</span> Añadir al carrito</button>
                                 </form>
                             }
                             @if (User.Identity?.IsAuthenticated == true)

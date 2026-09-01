@@ -4,84 +4,114 @@
     ViewData["Title"] = "Inicio";
 }
 
-<section class="hero-panel p-4 p-lg-5 mb-4">
-    <div class="row align-items-center g-4">
-        <div class="col-lg-8">
+<section class="hero-panel p-4 p-lg-5 mb-5">
+    <div class="row align-items-center g-4 g-xl-5">
+        <div class="col-lg-7">
             <span class="eyebrow">Proyecto de referencia</span>
-            <h1 class="display-5 fw-bold mt-2">Biblioteca Digital</h1>
-            <p class="lead mb-3">Una aplicación web completa para aprender ASP.NET Core MVC, C#, EF Core, Identity y vistas Razor.</p>
-            <p class="text-secondary mb-0">La arquitectura sigue el flujo Controlador → Servicio → Repositorio → Base de datos, equivalente al proyecto Java con Spring Boot.</p>
+            <h1 class="display-4 fw-bold mt-3 mb-3">Una buena historia empieza aquí.</h1>
+            <p class="lead mb-3">Explora una biblioteca digital construida para aprender ASP.NET Core MVC, C#, EF Core, Identity y Razor.</p>
+            <p class="hero-copy mb-0">Un proyecto pequeño, completo y fácil de ampliar: catálogo, usuarios, reseñas, favoritos y un checkout ficticio.</p>
+            <div class="d-flex flex-wrap align-items-center gap-3 mt-4">
+                <a class="btn btn-light text-primary" asp-controller="Books" asp-action="Index">Explorar catálogo <span aria-hidden="true">→</span></a>
+                <a class="btn btn-link link-light text-decoration-none px-0" asp-controller="Reviews" asp-action="Index">Leer reseñas <span aria-hidden="true">↗</span></a>
+            </div>
+            <div class="hero-trust mt-4">
+                <span>Datos de demostración</span>
+                <span>Responsive</span>
+                <span>Bootstrap 5</span>
+            </div>
         </div>
-        <div class="col-lg-4">
-            <div class="hero-action-card p-4">
-                <h2 class="h5">Empieza por aquí</h2>
-                <p class="small text-secondary">Explora el catálogo y después inicia sesión para probar favoritos, compras y reseñas.</p>
-                <div class="d-grid gap-2">
-                    <a class="btn btn-primary" asp-controller="Books" asp-action="Index">Entrar al catálogo</a>
-                    <a class="btn btn-outline-primary" asp-controller="Reviews" asp-action="Index">Leer reseñas</a>
+        <div class="col-lg-5 d-none d-md-block">
+            <div class="hero-art" aria-hidden="true">
+                <div class="hero-book hero-book-back"></div>
+                <div class="hero-book hero-book-main">
+                    <span class="hero-book-kicker">Biblioteca · 2026</span>
+                    <strong>Historias<br />que dejan<br />huella.</strong>
+                    <span class="hero-book-line">Lee · descubre · comparte</span>
                 </div>
+                <div class="hero-sticker">Nuevas<br />lecturas</div>
             </div>
         </div>
     </div>
 </section>
 
-<div class="row g-3 mb-4">
+<section class="row g-3 mb-5" aria-label="Resumen del catálogo">
     <div class="col-md-4">
-        <div class="stat-card h-100">
-            <span class="stat-label">Libros</span>
+        <article class="stat-card h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="stat-label">Libros</span>
+                <span class="badge-soft">01</span>
+            </div>
             <strong class="stat-number">@Model.BookCount</strong>
-            <p class="text-secondary mb-0">Catálogo con filtros, detalle, compra y favoritos.</p>
-        </div>
+            <p class="text-secondary mb-0">Catálogo con detalle, disponibilidad, compra y favoritos.</p>
+        </article>
     </div>
     <div class="col-md-4">
-        <div class="stat-card h-100">
-            <span class="stat-label">Autores</span>
+        <article class="stat-card h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="stat-label">Autores</span>
+                <span class="badge-soft">02</span>
+            </div>
             <strong class="stat-number">@Model.AuthorCount</strong>
-            <p class="text-secondary mb-0">Fichas de autor y libros relacionados.</p>
-        </div>
+            <p class="text-secondary mb-0">Fichas de autor con sus obras relacionadas.</p>
+        </article>
     </div>
     <div class="col-md-4">
-        <div class="stat-card h-100">
-            <span class="stat-label">Categorías</span>
+        <article class="stat-card h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="stat-label">Categorías</span>
+                <span class="badge-soft">03</span>
+            </div>
             <strong class="stat-number">@Model.CategoryCount</strong>
             <p class="text-secondary mb-0">Organización del catálogo mediante una relación N:M.</p>
-        </div>
+        </article>
     </div>
-</div>
-
-<section class="section-heading d-flex justify-content-between align-items-end mb-3">
-    <div>
-        <span class="eyebrow">Selección de la biblioteca</span>
-        <h2 class="h3 mt-1 mb-0">Libros destacados</h2>
-    </div>
-    <a class="btn btn-sm btn-outline-secondary" asp-controller="Books" asp-action="Index">Ver todos</a>
 </section>
 
-<div class="row g-3">
-    @foreach (var book in Model.FeaturedBooks)
-    {
-        <div class="col-md-4">
-            <article class="book-card h-100">
-                <div class="book-cover">
-                    @if (ImageStorage.GetUrl(ImageFolder.BookCovers, book.CoverImageFileName) is string coverUrl)
-                    {
-                        <img src="@coverUrl" alt="Portada de @book.Title" />
-                    }
-                    else
-                    {
-                        <span aria-hidden="true">📖</span>
-                    }
-                </div>
-                <div class="p-3">
-                    <h3 class="h5 mb-1"><a class="link-dark text-decoration-none" asp-controller="Books" asp-action="Details" asp-route-id="@book.Id">@book.Title</a></h3>
-                    <p class="text-secondary small mb-2">@book.Author.Name</p>
-                    <p class="small text-secondary mb-3">@book.Synopsis</p>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="price-tag">@book.Price.ToString("C")</span>
-                        <a class="btn btn-sm btn-outline-primary" asp-controller="Books" asp-action="Details" asp-route-id="@book.Id">Ver detalle</a>
+<section class="section-heading d-flex flex-wrap justify-content-between align-items-end gap-3 mb-3">
+    <div>
+        <span class="eyebrow">Selección de la biblioteca</span>
+        <h2 class="h2 mt-2 mb-1">Para empezar a leer</h2>
+        <p class="text-secondary mb-0">Algunas historias disponibles en el catálogo.</p>
+    </div>
+    <a class="btn btn-sm btn-outline-primary" asp-controller="Books" asp-action="Index">Ver todos <span aria-hidden="true">→</span></a>
+</section>
+
+@if (Model.FeaturedBooks.Count == 0)
+{
+    <div class="empty-state text-center">
+        <p class="text-secondary mb-0">Todavía no hay libros destacados.</p>
+    </div>
+}
+else
+{
+    <div class="row g-4">
+        @foreach (var book in Model.FeaturedBooks)
+        {
+            <div class="col-md-4">
+                <article class="book-card h-100">
+                    <div class="book-cover">
+                        @if (ImageStorage.GetUrl(ImageFolder.BookCovers, book.CoverImageFileName) is string coverUrl)
+                        {
+                            <img src="@coverUrl" alt="Portada de @book.Title" />
+                        }
+                        else
+                        {
+                            <span aria-hidden="true">📖</span>
+                        }
                     </div>
-                </div>
-            </article>
-        </div>
-    }
-</div>
+                    <div class="p-3 p-lg-4 d-flex flex-column h-100">
+                        <span class="small text-uppercase fw-bold text-secondary mb-2">Lectura recomendada</span>
+                        <h3 class="h5 mb-1"><a class="link-dark text-decoration-none" asp-controller="Books" asp-action="Details" asp-route-id="@book.Id">@book.Title</a></h3>
+                        <p class="text-secondary small mb-3">@book.Author.Name</p>
+                        <p class="small text-secondary flex-grow-1 mb-4">@book.Synopsis</p>
+                        <div class="d-flex justify-content-between align-items-center gap-2">
+                            <span class="price-tag">@book.Price.ToString("C")</span>
+                            <a class="btn btn-sm btn-outline-primary" asp-controller="Books" asp-action="Details" asp-route-id="@book.Id">Descubrir <span aria-hidden="true">↗</span></a>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        }
+    </div>
+}

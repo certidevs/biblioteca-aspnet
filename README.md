@@ -10,7 +10,7 @@ C# y ASP.NET Core MVC.
 - ASP.NET Core MVC con controladores y vistas Razor (`.cshtml`).
 - Entity Framework Core 10 con SQLite.
 - ASP.NET Core Identity con autenticación por cookies y roles.
-- Bootstrap 5 servido desde `wwwroot/lib`.
+- Bootstrap 5.3.8 servido desde `wwwroot/lib`, con un tema visual propio responsive.
 - Subida local de avatares y portadas con validación de tamaño, extensión y firma del archivo.
 - Migraciones EF Core y datos de demo idempotentes.
 - Sin tests automáticos, según el alcance docente solicitado.

@@ -4,19 +4,19 @@
     ViewData["Title"] = "Carrito";
 }
 
-<div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+<header class="page-header d-flex flex-wrap justify-content-between align-items-end gap-3">
     <div>
         <span class="eyebrow">Compra</span>
-        <h1 class="h2 mt-1 mb-1">Mi carrito</h1>
-        <p class="text-secondary mb-0">Revisa los libros, ajusta las cantidades y continúa al pago ficticio.</p>
+        <h1 class="page-title">Mi carrito</h1>
+        <p class="page-subtitle mb-0">Revisa tus libros, ajusta las cantidades y prepara tu pedido.</p>
     </div>
     <a class="btn btn-outline-primary" asp-controller="Books" asp-action="Index">← Seguir comprando</a>
-</div>
+</header>
 
 @if (Model.IsEmpty)
 {
     <section class="empty-state text-center">
-        <div class="empty-icon" aria-hidden="true">🛒</div>
+        <div class="empty-icon mx-auto" aria-hidden="true">🛒</div>
         <h2 class="h4 mt-3">Tu carrito está vacío</h2>
         <p class="text-secondary">Añade algún libro del catálogo para preparar un pedido.</p>
         <a class="btn btn-primary" asp-controller="Books" asp-action="Index">Explorar libros</a>
@@ -27,8 +27,11 @@ else
     <div class="row g-4 align-items-start">
         <div class="col-lg-8">
             <section class="detail-panel">
-                <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
-                    <h2 class="h4 mb-0">Libros seleccionados</h2>
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                    <div>
+                        <span class="eyebrow">Tu selección</span>
+                        <h2 class="h3 mt-2 mb-0">Libros seleccionados</h2>
+                    </div>
                     <span class="badge-soft">@Model.ItemCount unidad(es)</span>
                 </div>
 
@@ -47,32 +50,35 @@ else
                                 }
                             </div>
                             <div class="cart-item-content">
-                                <h3 class="h5 mb-1"><a class="link-dark text-decoration-none" asp-controller="Books" asp-action="Details" asp-route-id="@item.Book.Id">@item.Book.Title</a></h3>
-                                <p class="small text-secondary mb-2">@item.Book.Author.Name · @item.Book.Price.ToString("C") por unidad</p>
-                                <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                                <div class="d-flex justify-content-between gap-3">
+                                    <div>
+                                        <h3 class="h5 mb-1"><a class="link-dark text-decoration-none" asp-controller="Books" asp-action="Details" asp-route-id="@item.Book.Id">@item.Book.Title</a></h3>
+                                        <p class="small text-secondary mb-3">@item.Book.Author.Name · @item.Book.Price.ToString("C") por unidad</p>
+                                    </div>
+                                    <strong class="price-tag text-nowrap">@item.LineTotal.ToString("C")</strong>
+                                </div>
+                                <div class="d-flex flex-wrap align-items-end justify-content-between gap-3">
                                     <form asp-action="Update" method="post" class="quantity-form">
                                         <input type="hidden" name="id" value="@item.Book.Id" />
-                                        <label class="visually-hidden" for="quantity-@item.Book.Id">Cantidad de @item.Book.Title</label>
+                                        <label class="form-label small mb-1" for="quantity-@item.Book.Id">Cantidad</label>
                                         <div class="input-group input-group-sm quantity-control">
                                             <input class="form-control text-center" id="quantity-@item.Book.Id" name="quantity" type="number" min="0" max="99" value="@item.Quantity" />
                                             <button class="btn btn-outline-primary" type="submit">Actualizar</button>
                                         </div>
                                         <small class="text-secondary">Usa 0 para quitarlo</small>
                                     </form>
-                                    <div class="text-end">
-                                        <strong class="price-tag">@item.LineTotal.ToString("C")</strong>
-                                        <form asp-action="Remove" method="post" class="mt-1">
-                                            <input type="hidden" name="id" value="@item.Book.Id" />
-                                            <button class="btn btn-sm btn-link link-danger p-0" type="submit">Quitar</button>
-                                        </form>
-                                    </div>
+                                    <form asp-action="Remove" method="post">
+                                        <input type="hidden" name="id" value="@item.Book.Id" />
+                                        <button class="btn btn-sm btn-link link-danger p-0" type="submit">Quitar del carrito</button>
+                                    </form>
                                 </div>
                             </div>
                         </article>
                     }
                 </div>
 
-                <div class="d-flex justify-content-end mt-3 pt-3 border-top">
+                <div class="d-flex justify-content-between align-items-center gap-3 mt-4 pt-3 border-top">
+                    <span class="small text-secondary">Los precios son orientativos para la práctica.</span>
                     <form asp-action="Clear" method="post">
                         <button class="btn btn-sm btn-outline-danger" type="submit">Vaciar carrito</button>
                     </form>
@@ -80,22 +86,22 @@ else
             </section>
         </div>
         <div class="col-lg-4">
-            <aside class="detail-panel checkout-summary">
+            <aside class="detail-panel checkout-summary profile-summary">
                 <span class="eyebrow">Resumen</span>
-                <h2 class="h4 mt-1">Tu pedido</h2>
+                <h2 class="h3 mt-2">Tu pedido</h2>
                 <dl class="row book-meta mt-4 mb-4">
                     <dt class="col-7">Unidades</dt>
                     <dd class="col-5 text-end">@Model.ItemCount</dd>
                     <dt class="col-7">Subtotal</dt>
                     <dd class="col-5 text-end">@Model.Total.ToString("C")</dd>
                     <dt class="col-7">Envío</dt>
-                    <dd class="col-5 text-end">Gratis</dd>
+                    <dd class="col-5 text-end text-success">Gratis</dd>
                 </dl>
                 <div class="d-flex justify-content-between align-items-center border-top pt-3 mb-3">
                     <strong>Total</strong>
                     <strong class="price-tag fs-4">@Model.Total.ToString("C")</strong>
                 </div>
-                <a class="btn btn-primary w-100" asp-action="Checkout">Continuar al pago</a>
+                <a class="btn btn-primary w-100" asp-action="Checkout">Continuar al pago <span aria-hidden="true">→</span></a>
                 <p class="small text-secondary mt-3 mb-0">Es una simulación educativa. No se realiza ningún cargo real.</p>
             </aside>
         </div>

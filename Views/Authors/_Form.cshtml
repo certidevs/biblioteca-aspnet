@@ -1,9 +1,33 @@
 @model AuthorFormViewModel
 
 <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
-<div class="row g-3">
-    <div class="col-md-8"><label asp-for="Name" class="form-label"></label><input asp-for="Name" class="form-control" /><span asp-validation-for="Name" class="text-danger"></span></div>
-    <div class="col-md-4"><label asp-for="Nationality" class="form-label"></label><input asp-for="Nationality" class="form-control" /><span asp-validation-for="Nationality" class="text-danger"></span></div>
-    <div class="col-md-4"><label asp-for="BirthDate" class="form-label"></label><input asp-for="BirthDate" class="form-control" /><span asp-validation-for="BirthDate" class="text-danger"></span></div>
-    <div class="col-12"><label asp-for="Bio" class="form-label"></label><textarea asp-for="Bio" class="form-control" rows="5"></textarea><span asp-validation-for="Bio" class="text-danger"></span></div>
-</div>
+
+<section class="form-section">
+    <span class="eyebrow">Ficha del autor</span>
+    <h2 class="form-section-title">Información principal</h2>
+    <div class="row g-3">
+        <div class="col-md-8">
+            <label asp-for="Name" class="form-label"></label>
+            <input asp-for="Name" class="form-control" autofocus />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Nationality" class="form-label"></label>
+            <input asp-for="Nationality" class="form-control" />
+            <span asp-validation-for="Nationality" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="BirthDate" class="form-label"></label>
+            <input asp-for="BirthDate" class="form-control" />
+            <span asp-validation-for="BirthDate" class="text-danger"></span>
+        </div>
+    </div>
+</section>
+
+<section class="form-section">
+    <span class="eyebrow">Contexto</span>
+    <h2 class="form-section-title">Biografía</h2>
+    <label asp-for="Bio" class="form-label"></label>
+    <textarea asp-for="Bio" class="form-control" rows="6" placeholder="Escribe una breve biografía."></textarea>
+    <span asp-validation-for="Bio" class="text-danger"></span>
+</section>

@@ -2,5 +2,24 @@
 
 <input asp-for="BookId" type="hidden" />
 <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
-<div class="mb-3"><label asp-for="Rating" class="form-label"></label><select asp-for="Rating" class="form-select"><option value="5">5 estrellas</option><option value="4">4 estrellas</option><option value="3">3 estrellas</option><option value="2">2 estrellas</option><option value="1">1 estrella</option></select><span asp-validation-for="Rating" class="text-danger"></span></div>
-<div><label asp-for="Comment" class="form-label"></label><textarea asp-for="Comment" class="form-control" rows="6" placeholder="¿Qué te ha parecido?"></textarea><span asp-validation-for="Comment" class="text-danger"></span></div>
+
+<section class="form-section">
+    <span class="eyebrow">Tu opinión</span>
+    <h2 class="form-section-title">Comparte tu lectura</h2>
+    <div class="mb-3">
+        <label asp-for="Rating" class="form-label"></label>
+        <select asp-for="Rating" class="form-select">
+            <option value="5">★★★★★ · 5 estrellas</option>
+            <option value="4">★★★★☆ · 4 estrellas</option>
+            <option value="3">★★★☆☆ · 3 estrellas</option>
+            <option value="2">★★☆☆☆ · 2 estrellas</option>
+            <option value="1">★☆☆☆☆ · 1 estrella</option>
+        </select>
+        <span asp-validation-for="Rating" class="text-danger"></span>
+    </div>
+    <div>
+        <label asp-for="Comment" class="form-label"></label>
+        <textarea asp-for="Comment" class="form-control" rows="6" placeholder="¿Qué te ha parecido?"></textarea>
+        <span asp-validation-for="Comment" class="text-danger"></span>
+    </div>
+</section>

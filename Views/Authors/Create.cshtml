@@ -5,7 +5,8 @@
 
 <div class="row justify-content-center"><div class="col-xl-8"><div class="form-panel">
     <span class="eyebrow">Administración</span>
-    <h1 class="h2 mt-1">Nuevo autor</h1>
+    <h1 class="page-title">Nuevo autor</h1>
+    <p class="page-subtitle">Añade una persona autora para relacionarla después con sus libros.</p>
     <form asp-action="Create" method="post">
         <partial name="_Form" model="Model" />
         <div class="d-flex gap-2 mt-4"><button class="btn btn-primary" type="submit">Guardar autor</button><a class="btn btn-outline-secondary" asp-action="Index">Cancelar</a></div>

@@ -9,8 +9,8 @@
         <div class="form-panel">
             <a class="small text-decoration-none" asp-action="Index">← Volver a mi perfil</a>
             <span class="eyebrow d-block mt-3">Cuenta</span>
-            <h1 class="h2 mt-1">Editar perfil</h1>
-            <p class="text-secondary">Actualiza tu nombre visible, email y avatar.</p>
+            <h1 class="page-title">Editar perfil</h1>
+            <p class="page-subtitle">Actualiza tu nombre visible, email y avatar.</p>
 
             <form asp-action="Edit" method="post" enctype="multipart/form-data">
                 <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
@@ -27,7 +27,7 @@
                             <span asp-validation-for="Email" class="text-danger"></span>
                         </div>
                     </div>
-                    <div class="col-md-5">
+                    <div class="col-md-5 upload-field">
                         @if (ImageStorage.GetUrl(ImageFolder.Avatars, Model.CurrentAvatarFileName) is string avatarUrl)
                         {
                             <img class="avatar avatar-xl mb-3" src="@avatarUrl" alt="Avatar actual" />

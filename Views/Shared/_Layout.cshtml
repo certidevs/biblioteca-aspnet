@@ -10,6 +10,12 @@
         ? "U"
         : currentName[..1].ToUpperInvariant();
     var cartCount = User.Identity?.IsAuthenticated == true ? CartService.GetTotalQuantity() : 0;
+    var activeController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var isAdminController = activeController is "Users" or "Authors" or "Categories" or "Books" or "Orders";
+    var isAdminSection = isAdminController && User.IsInRole(RoleNames.Admin);
+    string NavClass(string controller) => string.Equals(activeController, controller, StringComparison.OrdinalIgnoreCase)
+        ? "nav-link active"
+        : "nav-link";
 }
 <!DOCTYPE html>
 <html lang="es">
@@ -21,9 +27,9 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark app-navbar sticky-top">
-        <div class="container">
-            <a class="navbar-brand fw-bold" asp-controller="Home" asp-action="Index">
+    <nav class="navbar navbar-expand-lg navbar-light app-navbar sticky-top" data-bs-theme="light">
+        <div class="container-xl">
+            <a class="navbar-brand fw-bold d-flex align-items-center" asp-controller="Home" asp-action="Index" aria-label="Biblioteca Digital, inicio">
                 <span class="brand-mark">B</span> Biblioteca
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
@@ -32,34 +38,49 @@
             </button>
             <div class="collapse navbar-collapse" id="mainNav">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">Inicio</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-controller="Books" asp-action="Index">Libros</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-controller="Authors" asp-action="Index">Autores</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-controller="Categories" asp-action="Index">Categorías</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-controller="Reviews" asp-action="Index">Reseñas</a></li>
+                    <li class="nav-item"><a class='@NavClass("Home")' asp-controller="Home" asp-action="Index">Inicio</a></li>
+                    <li class="nav-item"><a class='@NavClass("Books")' asp-controller="Books" asp-action="Index">Libros</a></li>
+                    <li class="nav-item"><a class='@NavClass("Authors")' asp-controller="Authors" asp-action="Index">Autores</a></li>
+                    <li class="nav-item"><a class='@NavClass("Categories")' asp-controller="Categories" asp-action="Index">Categorías</a></li>
+                    <li class="nav-item"><a class='@NavClass("Reviews")' asp-controller="Reviews" asp-action="Index">Reseñas</a></li>
                     @if (User.Identity?.IsAuthenticated == true)
                     {
-                        <li class="nav-item"><a class="nav-link" asp-controller="Orders" asp-action="Index">Pedidos</a></li>
+                        <li class="nav-item"><a class='@NavClass("Orders")' asp-controller="Orders" asp-action="Index">Pedidos</a></li>
                     }
                     @if (User.IsInRole(RoleNames.Admin))
                     {
-                        <li class="nav-item"><a class="nav-link" asp-controller="Users" asp-action="Index">Usuarios</a></li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle @(isAdminSection ? "active" : null)" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Administración
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><h6 class="dropdown-header">Gestionar catálogo</h6></li>
+                                <li><a class="dropdown-item" asp-controller="Books" asp-action="Index">Libros</a></li>
+                                <li><a class="dropdown-item" asp-controller="Authors" asp-action="Index">Autores</a></li>
+                                <li><a class="dropdown-item" asp-controller="Categories" asp-action="Index">Categorías</a></li>
+                                <li><hr class="dropdown-divider" /></li>
+                                <li><h6 class="dropdown-header">Gestionar usuarios</h6></li>
+                                <li><a class="dropdown-item" asp-controller="Users" asp-action="Index">Usuarios</a></li>
+                                <li><a class="dropdown-item" asp-controller="Orders" asp-action="Index">Pedidos</a></li>
+                            </ul>
+                        </li>
                     }
                 </ul>
-                <ul class="navbar-nav align-items-lg-center gap-lg-2">
+                <ul class="navbar-nav align-items-lg-center gap-lg-1">
                     @if (User.Identity?.IsAuthenticated == true)
                     {
                         <li class="nav-item">
-                            <a class="nav-link cart-link" asp-controller="Cart" asp-action="Index">
-                                <span aria-hidden="true">🛒</span> Carrito
+                            <a class="nav-link cart-link d-inline-flex align-items-center gap-2" asp-controller="Cart" asp-action="Index">
+                                <span aria-hidden="true">🛒</span>
+                                <span>Carrito</span>
                                 @if (cartCount > 0)
                                 {
-                                    <span class="badge rounded-pill text-bg-light text-primary">@cartCount</span>
+                                    <span class="cart-count" aria-label="@cartCount artículo(s) en el carrito">@cartCount</span>
                                 }
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center gap-2" asp-controller="Profile" asp-action="Index">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 @if (currentUser?.AvatarFileName is string avatarFileName)
                                 {
                                     <img class="avatar avatar-xs" src="@ImageStorage.GetUrl(ImageFolder.Avatars, avatarFileName)" alt="Avatar de @(currentUser.DisplayName ?? currentUser.UserName)" />
@@ -68,28 +89,33 @@
                                 {
                                     <span class="avatar avatar-xs avatar-placeholder">@currentInitial</span>
                                 }
-                                <span>Mi perfil</span>
+                                <span class="d-lg-none d-xl-inline">@currentName</span>
                             </a>
-                        </li>
-                        <li class="nav-item"><span class="navbar-text small">Hola, @currentName</span></li>
-                        <li class="nav-item">
-                            <form asp-controller="Account" asp-action="Logout" method="post">
-                                @Html.AntiForgeryToken()
-                                <button class="btn btn-sm btn-outline-light" type="submit">Cerrar sesión</button>
-                            </form>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><h6 class="dropdown-header">Hola, @currentName</h6></li>
+                                <li><a class="dropdown-item" asp-controller="Profile" asp-action="Index">Mi perfil</a></li>
+                                <li><a class="dropdown-item" asp-controller="Orders" asp-action="Index">Mis pedidos</a></li>
+                                <li><hr class="dropdown-divider" /></li>
+                                <li>
+                                    <form asp-controller="Account" asp-action="Logout" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <button class="dropdown-item text-danger" type="submit">Cerrar sesión</button>
+                                    </form>
+                                </li>
+                            </ul>
                         </li>
                     }
                     else
                     {
                         <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="Login">Iniciar sesión</a></li>
-                        <li class="nav-item"><a class="btn btn-sm btn-light text-primary" asp-controller="Account" asp-action="Register">Registrarse</a></li>
+                        <li class="nav-item mt-2 mt-lg-0"><a class="btn btn-primary btn-sm text-white" asp-controller="Account" asp-action="Register">Crear cuenta</a></li>
                     }
                 </ul>
             </div>
         </div>
     </nav>
 
-    <main class="container py-4">
+    <main class="container-xl app-main py-4 py-lg-5 flex-grow-1">
         @if (TempData["Message"] is string message)
         {
             <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
@@ -107,9 +133,18 @@
         @RenderBody()
     </main>
 
-    <footer class="container py-4 mt-auto">
-        <hr />
-        <p class="text-muted small mb-0">Biblioteca Digital · ASP.NET Core MVC · .NET 10 · EF Core · Bootstrap</p>
+    <footer class="container-xl py-4 mt-auto">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 pt-4 border-top">
+            <div>
+                <p class="mb-1 fw-semibold">Biblioteca Digital</p>
+                <p class="small mb-0">Proyecto de referencia · ASP.NET Core MVC · .NET 10 · EF Core</p>
+            </div>
+            <div class="d-flex flex-wrap gap-3 small">
+                <a asp-controller="Books" asp-action="Index">Catálogo</a>
+                <a asp-controller="Authors" asp-action="Index">Autores</a>
+                <a asp-controller="Reviews" asp-action="Index">Reseñas</a>
+            </div>
+        </div>
     </footer>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

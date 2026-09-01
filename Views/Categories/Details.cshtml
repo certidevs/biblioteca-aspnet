@@ -1,13 +1,79 @@
 @model Category
+@inject IImageStorage ImageStorage
 @{
     ViewData["Title"] = Model.Name;
+    var color = ColorContrast.NormalizeHex(Model.Color);
 }
 
-<div class="d-flex justify-content-between align-items-start gap-3 mb-4"><div><a class="small text-decoration-none" asp-action="Index">← Volver a categorías</a><h1 class="h2 mt-2 mb-1">@Model.Name</h1><p class="text-secondary mb-0">@(Model.Description ?? "Sin descripción disponible.")</p></div>@if (User.IsInRole(RoleNames.Admin)) { <div class="d-flex gap-2"><a class="btn btn-sm btn-outline-primary" asp-action="Edit" asp-route-id="@Model.Id">Editar</a><a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-route-id="@Model.Id">Eliminar</a></div>}</div>
+<section class="detail-panel category-intro mb-5" style="--category-color:@color">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-4">
+        <div>
+            <a class="small text-decoration-none" asp-action="Index">← Volver a categorías</a>
+            <div class="mt-4 mb-3">
+                <span class="badge-soft" style="background-color:@color; color:@ColorContrast.TextColor(Model.Color)">@Model.Name</span>
+            </div>
+            <h1 class="page-title mb-2">@Model.Name</h1>
+            <p class="page-subtitle mb-0">@(Model.Description ?? "Sin descripción disponible.")</p>
+        </div>
+        <div class="text-md-end">
+            <span class="eyebrow">En esta colección</span>
+            <strong class="stat-number d-block mt-2">@Model.Books.Count</strong>
+            <span class="text-secondary">libro(s) disponibles</span>
+        </div>
+    </div>
+    @if (User.IsInRole(RoleNames.Admin))
+    {
+        <div class="d-flex flex-wrap gap-2 mt-4 pt-4 border-top">
+            <a class="btn btn-sm btn-outline-primary" asp-action="Edit" asp-route-id="@Model.Id">Editar categoría</a>
+            <a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-route-id="@Model.Id">Eliminar</a>
+        </div>
+    }
+</section>
 
-<section><div class="d-flex justify-content-between align-items-center mb-3"><h2 class="h3 mb-0">Libros en esta categoría</h2><span class="badge-soft">@Model.Books.Count libro(s)</span></div><div class="row g-3">
-@foreach (var book in Model.Books.OrderBy(book => book.Title))
-{
-    <div class="col-md-6 col-xl-4"><article class="book-card h-100"><div class="book-cover">📖</div><div class="p-3"><h3 class="h5"><a class="link-dark text-decoration-none" asp-controller="Books" asp-action="Details" asp-route-id="@book.Id">@book.Title</a></h3><p class="small text-secondary">@book.Author.Name</p><p class="price-tag mb-0">@book.Price.ToString("C")</p></div></article></div>
-}
-</div></section>
+<section>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+            <span class="eyebrow">Selección</span>
+            <h2 class="h3 mt-2 mb-0">Libros de esta categoría</h2>
+        </div>
+        <a class="btn btn-sm btn-outline-primary" asp-controller="Books" asp-action="Index" asp-route-categoryId="@Model.Id">Ver en catálogo</a>
+    </div>
+
+    @if (Model.Books.Count == 0)
+    {
+        <div class="empty-state text-center">
+            <p class="text-secondary mb-0">Todavía no hay libros en esta categoría.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var book in Model.Books.OrderBy(book => book.Title))
+            {
+                <div class="col-md-6 col-xl-4">
+                    <article class="book-card h-100">
+                        <div class="book-cover">
+                            @if (ImageStorage.GetUrl(ImageFolder.BookCovers, book.CoverImageFileName) is string coverUrl)
+                            {
+                                <img src="@coverUrl" alt="Portada de @book.Title" />
+                            }
+                            else
+                            {
+                                <span aria-hidden="true">📖</span>
+                            }
+                        </div>
+                        <div class="p-3 p-lg-4 d-flex flex-column h-100">
+                            <span class="small text-uppercase text-secondary fw-bold">Libro</span>
+                            <h3 class="h5 mt-1 mb-1"><a class="link-dark text-decoration-none" asp-controller="Books" asp-action="Details" asp-route-id="@book.Id">@book.Title</a></h3>
+                            <p class="small text-secondary flex-grow-1">@book.Author.Name</p>
+                            <div class="d-flex justify-content-between align-items-center gap-2 mt-3">
+                                <span class="price-tag">@book.Price.ToString("C")</span>
+                                <a class="btn btn-sm btn-outline-primary" asp-controller="Books" asp-action="Details" asp-route-id="@book.Id">Ver detalle <span aria-hidden="true">↗</span></a>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            }
+        </div>
+    }
+</section>

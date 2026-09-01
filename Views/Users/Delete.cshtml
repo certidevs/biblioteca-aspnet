@@ -7,7 +7,7 @@
     <div class="col-lg-7">
         <div class="form-panel border-danger-subtle">
             <span class="eyebrow text-danger">Administración</span>
-            <h1 class="h2 mt-1">Eliminar usuario</h1>
+            <h1 class="page-title">Eliminar usuario</h1>
             <p>Vas a eliminar la cuenta <strong>@(Model.User.DisplayName ?? Model.User.UserName)</strong>.</p>
             <div class="alert alert-warning">También se eliminarán sus favoritos, reseñas y compras asociadas por las relaciones configuradas en el modelo.</div>
             <form asp-action="Delete" asp-route-id="@Model.User.Id" method="post">

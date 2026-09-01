@@ -5,25 +5,73 @@
 }
 
 <div class="row justify-content-center">
-    <div class="col-lg-8">
+    <div class="col-xl-9">
         <div class="form-panel">
             <a class="small text-decoration-none" asp-action="Details" asp-route-id="@Model.Id">← Volver al usuario</a>
-            <span class="eyebrow d-block mt-3">Administración</span>
-            <h1 class="h2 mt-1">Editar usuario</h1>
-            <p class="text-secondary">Modifica los datos administrativos de la cuenta. El nombre de usuario no se cambia para conservar su identificador de acceso.</p>
+            <span class="eyebrow d-block mt-4">Administración</span>
+            <h1 class="page-title">Editar usuario</h1>
+            <p class="page-subtitle">Modifica los datos administrativos. El nombre de usuario no se cambia para conservar su identificador de acceso.</p>
             <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
                 <input asp-for="Id" type="hidden" />
                 <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
-                <div class="row g-3">
-                    <div class="col-md-6"><label asp-for="DisplayName" class="form-label"></label><input asp-for="DisplayName" class="form-control" autofocus /><span asp-validation-for="DisplayName" class="text-danger"></span></div>
-                    <div class="col-md-6"><label class="form-label">Avatar</label>@if (ImageStorage.GetUrl(ImageFolder.Avatars, Model.CurrentAvatarFileName) is string avatarUrl) { <div><img class="avatar avatar-lg" src="@avatarUrl" alt="Avatar actual" /></div> } else { <p class="text-secondary mb-0">Sin avatar</p> }</div>
-                    <div class="col-md-6"><label asp-for="Email" class="form-label"></label><input asp-for="Email" class="form-control" /><span asp-validation-for="Email" class="text-danger"></span></div>
-                    <div class="col-md-3"><label asp-for="Role" class="form-label"></label><select asp-for="Role" class="form-select"><option value="User">Usuario</option><option value="Admin">Administrador</option></select></div>
-                    <div class="col-md-3 d-flex align-items-center pt-md-4"><div class="form-check"><input asp-for="IsActive" class="form-check-input" /><label asp-for="IsActive" class="form-check-label"></label></div></div>
-                    <div class="col-md-6"><label asp-for="NewPassword" class="form-label"></label><input asp-for="NewPassword" class="form-control" /><div class="form-text">Déjalo vacío para conservar la contraseña actual.</div><span asp-validation-for="NewPassword" class="text-danger"></span></div>
-                    <div class="col-md-6"><label asp-for="NewPasswordConfirmation" class="form-label"></label><input asp-for="NewPasswordConfirmation" class="form-control" /><span asp-validation-for="NewPasswordConfirmation" class="text-danger"></span></div>
+
+                <section class="form-section">
+                    <span class="eyebrow">Perfil</span>
+                    <h2 class="form-section-title">Datos visibles</h2>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="DisplayName" class="form-label"></label>
+                            <input asp-for="DisplayName" class="form-control" autocomplete="name" autofocus />
+                            <span asp-validation-for="DisplayName" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Avatar actual</label>
+                            @if (ImageStorage.GetUrl(ImageFolder.Avatars, Model.CurrentAvatarFileName) is string avatarUrl)
+                            {
+                                <div><img class="avatar avatar-lg" src="@avatarUrl" alt="Avatar actual" /></div>
+                            }
+                            else
+                            {
+                                <p class="text-secondary mb-0">Sin avatar</p>
+                            }
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Email" class="form-label"></label>
+                            <input asp-for="Email" class="form-control" autocomplete="email" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="form-section">
+                    <span class="eyebrow">Acceso</span>
+                    <h2 class="form-section-title">Permisos y contraseña</h2>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label asp-for="Role" class="form-label"></label>
+                            <select asp-for="Role" class="form-select"><option value="User">Usuario</option><option value="Admin">Administrador</option></select>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-center pt-md-4">
+                            <div class="form-check"><input asp-for="IsActive" class="form-check-input" /><label asp-for="IsActive" class="form-check-label"></label></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="NewPassword" class="form-label"></label>
+                            <input asp-for="NewPassword" class="form-control" autocomplete="new-password" />
+                            <div class="form-text">Déjalo vacío para conservar la contraseña actual.</div>
+                            <span asp-validation-for="NewPassword" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="NewPasswordConfirmation" class="form-label"></label>
+                            <input asp-for="NewPasswordConfirmation" class="form-control" autocomplete="new-password" />
+                            <span asp-validation-for="NewPasswordConfirmation" class="text-danger"></span>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="d-flex flex-wrap gap-2 mt-4">
+                    <button class="btn btn-primary" type="submit">Guardar cambios</button>
+                    <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.Id">Cancelar</a>
                 </div>
-                <div class="d-flex gap-2 mt-4"><button class="btn btn-primary" type="submit">Guardar cambios</button><a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.Id">Cancelar</a></div>
             </form>
         </div>
     </div>

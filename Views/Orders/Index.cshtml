@@ -4,19 +4,23 @@
     ViewData["Title"] = adminView ? "Pedidos" : "Mis pedidos";
 }
 
-<div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+<header class="page-header d-flex flex-wrap justify-content-between align-items-end gap-3">
     <div>
         <span class="eyebrow">Actividad</span>
-        <h1 class="h2 mt-1 mb-1">@(adminView ? "Pedidos de la biblioteca" : "Mis pedidos")</h1>
-        <p class="text-secondary mb-0">@(adminView ? "Consulta los pedidos realizados por todos los usuarios." : "Consulta el historial de tus compras.")</p>
+        <h1 class="page-title">@(adminView ? "Pedidos de la biblioteca" : "Mis pedidos")</h1>
+        <p class="page-subtitle mb-0">@(adminView ? "Consulta los pedidos realizados por todos los usuarios." : "Consulta el historial de tus compras.")</p>
     </div>
-    <a class="btn btn-primary" asp-controller="Books" asp-action="Index">Explorar catálogo</a>
-</div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge-soft">@Model.Count pedido(s)</span>
+        <a class="btn btn-primary" asp-controller="Books" asp-action="Index">Explorar catálogo</a>
+    </div>
+</header>
 
 @if (Model.Count == 0)
 {
     <div class="empty-state text-center">
-        <h2 class="h4">Todavía no hay pedidos</h2>
+        <div class="empty-icon mx-auto" aria-hidden="true">✓</div>
+        <h2 class="h4 mt-3">Todavía no hay pedidos</h2>
         <p class="text-secondary">Cuando completes un pago ficticio aparecerá aquí.</p>
         <a class="btn btn-outline-primary" asp-controller="Books" asp-action="Index">Ver libros</a>
     </div>
@@ -44,7 +48,7 @@ else
                     {
                         <tr>
                             <td>
-                                <a asp-action="Details" asp-route-id="@order.Id">Pedido #@order.Id</a>
+                                <a class="fw-semibold text-decoration-none" asp-action="Details" asp-route-id="@order.Id">Pedido #@order.Id</a>
                                 <div class="small text-secondary">@order.Items.Sum(item => item.Quantity) unidad(es)</div>
                             </td>
                             @if (adminView)
@@ -52,7 +56,7 @@ else
                                 <td>@(order.User?.DisplayName ?? order.User?.UserName ?? "—")</td>
                             }
                             <td>@order.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
-                            <td><span class="badge @(order.Status == OrderStatus.Paid ? "text-bg-success" : "text-bg-secondary")">@(order.Status == OrderStatus.Paid ? "Pagado" : order.Status.ToString())</span></td>
+                            <td><span class="badge rounded-pill @(order.Status == OrderStatus.Paid ? "text-bg-success" : "text-bg-secondary")">@(order.Status == OrderStatus.Paid ? "Pagado" : order.Status.ToString())</span></td>
                             <td class="text-end fw-semibold">@order.Total.ToString("C")</td>
                             <td class="text-end"><a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@order.Id">Ver detalle</a></td>
                         </tr>

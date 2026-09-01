@@ -4,48 +4,64 @@
     var search = ViewData["Search"] as string;
 }
 
-<div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+<header class="page-header d-flex flex-wrap justify-content-between align-items-end gap-3">
     <div>
         <span class="eyebrow">Catálogo</span>
-        <h1 class="h2 mt-1 mb-1">Autores</h1>
-        <p class="text-secondary mb-0">Consulta autores y navega hasta sus libros.</p>
+        <h1 class="page-title">Autores</h1>
+        <p class="page-subtitle mb-0">Conoce a quienes están detrás de las historias y descubre sus obras.</p>
     </div>
-    @if (User.IsInRole(RoleNames.Admin))
-    {
-        <a class="btn btn-primary" asp-action="Create">+ Nuevo autor</a>
-    }
-</div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge-soft">@Model.Count autor(es)</span>
+        @if (User.IsInRole(RoleNames.Admin))
+        {
+            <a class="btn btn-primary" asp-action="Create"><span aria-hidden="true">＋</span> Nuevo autor</a>
+        }
+    </div>
+</header>
 
-<form class="form-panel mb-4" method="get">
-    <div class="row g-2 align-items-end">
-        <div class="col-md-10">
-            <label class="form-label" for="search">Buscar por nombre o nacionalidad</label>
-            <input class="form-control" id="search" name="search" value="@search" />
+<form class="search-panel p-3 p-lg-4 mb-4" method="get">
+    <div class="row g-3 align-items-end">
+        <div class="col-md-9">
+            <label class="form-label" for="search">Buscar un autor</label>
+            <div class="input-group">
+                <span class="input-group-text bg-white border-end-0" aria-hidden="true">⌕</span>
+                <input class="form-control border-start-0 ps-0" id="search" name="search" value="@search" placeholder="Nombre o nacionalidad" />
+            </div>
         </div>
-        <div class="col-md-2 d-grid">
-            <button class="btn btn-primary" type="submit">Buscar</button>
+        <div class="col-md-3 d-grid">
+            <button class="btn btn-primary" type="submit">Buscar autores</button>
         </div>
     </div>
 </form>
 
 @if (Model.Count == 0)
 {
-    <div class="empty-state text-center"><p class="text-secondary mb-0">No hay autores que coincidan.</p></div>
+    <div class="empty-state text-center">
+        <div class="empty-icon mx-auto" aria-hidden="true">Aa</div>
+        <h2 class="h4 mt-3">No hay autores que coincidan</h2>
+        <p class="text-secondary">Prueba con otro nombre o nacionalidad.</p>
+    </div>
 }
 else
 {
-    <div class="row g-3">
+    <div class="row g-4">
         @foreach (var author in Model)
         {
             <div class="col-md-6 col-xl-4">
-                <article class="detail-panel h-100">
-                    <div class="d-flex justify-content-between gap-2">
-                        <h2 class="h5 mb-1">@author.Name</h2>
-                        <span class="badge-soft">@author.Books.Count libro(s)</span>
+                <article class="detail-panel author-card h-100 d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <span class="eyebrow">Autor</span>
+                            <h2 class="h4 mt-2 mb-1">@author.Name</h2>
+                        </div>
+                        <span class="badge-soft">@author.Books.Count</span>
                     </div>
-                    <p class="small text-secondary mb-2">@(author.Nationality ?? "Nacionalidad no indicada")</p>
-                    <p class="small text-secondary">@(author.Bio ?? "Sin biografía disponible.")</p>
-                    <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@author.Id">Ver ficha</a>
+                    <p class="small text-secondary mt-3 mb-2">@(author.Nationality ?? "Nacionalidad no indicada")</p>
+                    <p class="small text-secondary flex-grow-1">@(author.Bio ?? "Sin biografía disponible.")</p>
+                    <div class="d-flex justify-content-between align-items-center gap-2 mt-3 pt-3 border-top">
+                        <span class="category-count">libro(s)</span>
+                        <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@author.Id">Ver ficha <span aria-hidden="true">↗</span></a>
+                    </div>
                 </article>
             </div>
         }

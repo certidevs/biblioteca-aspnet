@@ -7,7 +7,8 @@
     <div class="col-xl-9">
         <div class="form-panel">
             <span class="eyebrow">Administración</span>
-            <h1 class="h2 mt-1">Editar libro</h1>
+            <h1 class="page-title">Editar libro</h1>
+            <p class="page-subtitle">Actualiza la información editorial, la portada y las categorías del libro.</p>
             <form asp-action="Edit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data">
                 <input asp-for="Id" type="hidden" />
                 <partial name="_Form" model="Model" />
