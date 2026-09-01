@@ -14,6 +14,7 @@ public sealed class Category
     public string? Description { get; set; }
 
     [StringLength(20)]
+    [RegularExpression(@"^#[0-9a-fA-F]{6}$", ErrorMessage = "Usa un color hexadecimal como #2563eb.")]
     public string? Color { get; set; }
 
     public ICollection<Book> Books { get; set; } = new List<Book>();

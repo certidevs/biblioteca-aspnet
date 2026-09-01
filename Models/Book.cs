@@ -44,6 +44,6 @@ public sealed class Book
     public Author Author { get; set; } = null!;
     public ICollection<Category> Categories { get; set; } = new List<Category>();
     public ICollection<Review> Reviews { get; set; } = new List<Review>();
-    public ICollection<Purchase> Purchases { get; set; } = new List<Purchase>();
+    public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
     public ICollection<ApplicationUser> FavoriteUsers { get; set; } = new List<ApplicationUser>();
 }

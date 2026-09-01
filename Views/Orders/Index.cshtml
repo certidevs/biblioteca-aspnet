@@ -1,0 +1,64 @@
+@model List<Order>
+@{
+    var adminView = ViewData["IsAdminView"] is true;
+    ViewData["Title"] = adminView ? "Pedidos" : "Mis pedidos";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+    <div>
+        <span class="eyebrow">Actividad</span>
+        <h1 class="h2 mt-1 mb-1">@(adminView ? "Pedidos de la biblioteca" : "Mis pedidos")</h1>
+        <p class="text-secondary mb-0">@(adminView ? "Consulta los pedidos realizados por todos los usuarios." : "Consulta el historial de tus compras.")</p>
+    </div>
+    <a class="btn btn-primary" asp-controller="Books" asp-action="Index">Explorar catálogo</a>
+</div>
+
+@if (Model.Count == 0)
+{
+    <div class="empty-state text-center">
+        <h2 class="h4">Todavía no hay pedidos</h2>
+        <p class="text-secondary">Cuando completes un pago ficticio aparecerá aquí.</p>
+        <a class="btn btn-outline-primary" asp-controller="Books" asp-action="Index">Ver libros</a>
+    </div>
+}
+else
+{
+    <section class="table-panel">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Pedido</th>
+                        @if (adminView)
+                        {
+                            <th>Usuario</th>
+                        }
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                        <th class="text-end">Total</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var order in Model)
+                    {
+                        <tr>
+                            <td>
+                                <a asp-action="Details" asp-route-id="@order.Id">Pedido #@order.Id</a>
+                                <div class="small text-secondary">@order.Items.Sum(item => item.Quantity) unidad(es)</div>
+                            </td>
+                            @if (adminView)
+                            {
+                                <td>@(order.User?.DisplayName ?? order.User?.UserName ?? "—")</td>
+                            }
+                            <td>@order.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            <td><span class="badge @(order.Status == OrderStatus.Paid ? "text-bg-success" : "text-bg-secondary")">@(order.Status == OrderStatus.Paid ? "Pagado" : order.Status.ToString())</span></td>
+                            <td class="text-end fw-semibold">@order.Total.ToString("C")</td>
+                            <td class="text-end"><a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@order.Id">Ver detalle</a></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+}

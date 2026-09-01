@@ -125,6 +125,8 @@ public sealed class AccountController : Controller
     public async Task<IActionResult> Logout()
     {
         await signInManager.SignOutAsync();
+        // Evita que el carrito de una cuenta se reutilice accidentalmente al entrar con otra.
+        HttpContext.Session.Clear();
         return RedirectToAction(nameof(Login), new { loggedOut = true });
     }
 

@@ -21,7 +21,7 @@ else
         @foreach (var category in Model)
         {
             <div class="col-md-6 col-xl-3"><article class="detail-panel h-100">
-                <span class="badge-soft mb-3" style="background-color:@(category.Color ?? "#eef2ff")">@category.Name</span>
+                <span class="badge-soft mb-3" style="background-color:@ColorContrast.NormalizeHex(category.Color); color:@ColorContrast.TextColor(category.Color)">@category.Name</span>
                 <p class="small text-secondary">@(category.Description ?? "Sin descripción disponible.")</p>
                 <p class="small mb-3">@category.Books.Count libro(s)</p>
                 <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@category.Id">Ver categoría</a>

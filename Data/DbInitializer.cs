@@ -42,6 +42,20 @@ public static class DbInitializer
 
         if (await context.Authors.AnyAsync())
         {
+            // Si se parte de una BD creada antes de introducir pedidos y no había
+            // compras históricas, deja igualmente una compra demo disponible.
+            if (!await context.Orders.AnyAsync())
+            {
+                var demoBook = await context.Books
+                    .OrderBy(book => book.Id)
+                    .FirstOrDefaultAsync();
+                if (demoBook is not null)
+                {
+                    context.Orders.Add(CreateDemoOrder(user.Id, demoBook));
+                    await context.SaveChangesAsync();
+                }
+            }
+
             return;
         }
 
@@ -172,14 +186,34 @@ public static class DbInitializer
             UserId = admin.Id,
             BookId = books[1].Id
         });
-        context.Purchases.Add(new Purchase
-        {
-            UserId = user.Id,
-            BookId = books[0].Id,
-            PriceAtPurchase = books[0].Price,
-            PurchasedAt = DateTime.UtcNow.AddDays(-2)
-        });
+        context.Orders.Add(CreateDemoOrder(user.Id, books[0], DateTime.UtcNow.AddDays(-2)));
         await context.SaveChangesAsync();
+    }
+
+    private static Order CreateDemoOrder(
+        string userId,
+        Book book,
+        DateTime? createdAt = null)
+    {
+        return new Order
+        {
+            UserId = userId,
+            CreatedAt = createdAt ?? DateTime.UtcNow.AddDays(-2),
+            Status = OrderStatus.Paid,
+            Total = book.Price,
+            PaymentMethod = "Tarjeta demo",
+            PaymentLastFour = "4242",
+            Items = new List<OrderItem>
+            {
+                new()
+                {
+                    BookId = book.Id,
+                    BookTitle = book.Title,
+                    Quantity = 1,
+                    UnitPrice = book.Price
+                }
+            }
+        };
     }
 
     private static async Task EnsureRoleAsync(RoleManager<IdentityRole> roleManager, string role)

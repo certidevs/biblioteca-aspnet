@@ -1,5 +1,6 @@
 @inject UserManager<ApplicationUser> UserManager
 @inject IImageStorage ImageStorage
+@inject ICartService CartService
 @{
     var currentUser = User.Identity?.IsAuthenticated == true
         ? await UserManager.GetUserAsync(User)
@@ -8,6 +9,7 @@
     var currentInitial = string.IsNullOrWhiteSpace(currentName)
         ? "U"
         : currentName[..1].ToUpperInvariant();
+    var cartCount = User.Identity?.IsAuthenticated == true ? CartService.GetTotalQuantity() : 0;
 }
 <!DOCTYPE html>
 <html lang="es">
@@ -35,6 +37,10 @@
                     <li class="nav-item"><a class="nav-link" asp-controller="Authors" asp-action="Index">Autores</a></li>
                     <li class="nav-item"><a class="nav-link" asp-controller="Categories" asp-action="Index">Categorías</a></li>
                     <li class="nav-item"><a class="nav-link" asp-controller="Reviews" asp-action="Index">Reseñas</a></li>
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <li class="nav-item"><a class="nav-link" asp-controller="Orders" asp-action="Index">Pedidos</a></li>
+                    }
                     @if (User.IsInRole(RoleNames.Admin))
                     {
                         <li class="nav-item"><a class="nav-link" asp-controller="Users" asp-action="Index">Usuarios</a></li>
@@ -43,6 +49,15 @@
                 <ul class="navbar-nav align-items-lg-center gap-lg-2">
                     @if (User.Identity?.IsAuthenticated == true)
                     {
+                        <li class="nav-item">
+                            <a class="nav-link cart-link" asp-controller="Cart" asp-action="Index">
+                                <span aria-hidden="true">🛒</span> Carrito
+                                @if (cartCount > 0)
+                                {
+                                    <span class="badge rounded-pill text-bg-light text-primary">@cartCount</span>
+                                }
+                            </a>
+                        </li>
                         <li class="nav-item">
                             <a class="nav-link d-flex align-items-center gap-2" asp-controller="Profile" asp-action="Index">
                                 @if (currentUser?.AvatarFileName is string avatarFileName)

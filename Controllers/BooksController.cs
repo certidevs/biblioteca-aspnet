@@ -12,18 +12,18 @@ public sealed class BooksController : Controller
     private readonly IBookService books;
     private readonly IAuthorService authors;
     private readonly ICategoryService categories;
-    private readonly IPurchaseService purchases;
+    private readonly ICartService cart;
 
     public BooksController(
         IBookService books,
         IAuthorService authors,
         ICategoryService categories,
-        IPurchaseService purchases)
+        ICartService cart)
     {
         this.books = books;
         this.authors = authors;
         this.categories = categories;
-        this.purchases = purchases;
+        this.cart = cart;
     }
 
     [HttpGet]
@@ -200,19 +200,25 @@ public sealed class BooksController : Controller
 
     [Authorize]
     [HttpPost]
-    public async Task<IActionResult> Buy(int id, CancellationToken cancellationToken)
+    public async Task<IActionResult> AddToCart(
+        int id,
+        int quantity = 1,
+        string? returnUrl = null,
+        CancellationToken cancellationToken = default)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId is null)
+        var result = await cart.AddAsync(id, quantity, cancellationToken);
+        if (result.Succeeded)
         {
-            return Challenge();
+            TempData["Message"] = quantity > 1
+                ? $"Se han añadido {quantity} unidades al carrito."
+                : "Libro añadido al carrito.";
+        }
+        else
+        {
+            TempData["Error"] = result.Error;
         }
 
-        var purchase = await purchases.BuyAsync(userId, id, cancellationToken);
-        TempData["Message"] = purchase is null
-            ? "El libro no está disponible para compra."
-            : "Compra registrada correctamente.";
-        return RedirectToAction(nameof(Details), new { id });
+        return RedirectToLocal(returnUrl, id);
     }
 
     private async Task FillCatalogOptionsAsync(

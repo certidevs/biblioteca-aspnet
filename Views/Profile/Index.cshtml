@@ -23,7 +23,7 @@
 <div class="row g-3 mb-4">
     <div class="col-md-3"><div class="stat-card h-100"><span class="stat-label">Favoritos</span><strong class="stat-number">@Model.FavoriteBooks.Count</strong></div></div>
     <div class="col-md-3"><div class="stat-card h-100"><span class="stat-label">Reseñas</span><strong class="stat-number">@Model.Reviews.Count</strong></div></div>
-    <div class="col-md-3"><div class="stat-card h-100"><span class="stat-label">Compras</span><strong class="stat-number">@Model.Purchases.Count</strong></div></div>
+    <div class="col-md-3"><div class="stat-card h-100"><span class="stat-label">Pedidos</span><strong class="stat-number">@Model.Orders.Count</strong></div></div>
     <div class="col-md-3"><div class="stat-card h-100"><span class="stat-label">Gastado</span><strong class="stat-number fs-3">@Model.TotalSpent.ToString("C")</strong></div></div>
 </div>
 
@@ -72,20 +72,25 @@
     </div>
     <div class="col-lg-6">
         <section class="detail-panel h-100">
-            <h2 class="h4">Mis compras</h2>
-            @if (Model.Purchases.Count == 0)
+            <h2 class="h4">Mis pedidos</h2>
+            @if (Model.Orders.Count == 0)
             {
-                <p class="text-secondary mt-3 mb-0">Todavía no tienes compras.</p>
+                <p class="text-secondary mt-3 mb-0">Todavía no tienes pedidos.</p>
             }
             else
             {
                 <div class="table-responsive mt-3">
                     <table class="table align-middle mb-0">
-                        <thead><tr><th>Libro</th><th>Fecha</th><th>Precio</th></tr></thead>
+                        <thead><tr><th>Pedido</th><th>Fecha</th><th>Estado</th><th>Total</th></tr></thead>
                         <tbody>
-                            @foreach (var purchase in Model.Purchases)
+                            @foreach (var order in Model.Orders)
                             {
-                                <tr><td><a asp-controller="Books" asp-action="Details" asp-route-id="@purchase.BookId">@purchase.Book.Title</a></td><td>@purchase.PurchasedAt.ToLocalTime().ToString("dd/MM/yyyy")</td><td>@purchase.PriceAtPurchase.ToString("C")</td></tr>
+                                <tr>
+                                    <td><a asp-controller="Orders" asp-action="Details" asp-route-id="@order.Id">Pedido #@order.Id</a><div class="small text-secondary">@string.Join(", ", order.Items.Select(item => $"{item.BookTitle} × {item.Quantity}"))</div></td>
+                                    <td>@order.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")</td>
+                                    <td><span class="badge @(order.Status == OrderStatus.Paid ? "text-bg-success" : "text-bg-secondary")">@(order.Status == OrderStatus.Paid ? "Pagado" : order.Status.ToString())</span></td>
+                                    <td>@order.Total.ToString("C")</td>
+                                </tr>
                             }
                         </tbody>
                     </table>

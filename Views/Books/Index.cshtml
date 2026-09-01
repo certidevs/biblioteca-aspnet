@@ -130,7 +130,7 @@ else
                         <div class="mb-3">
                             @foreach (var category in book.Categories)
                             {
-                                <span class="badge-soft me-1 mb-1">@category.Name</span>
+                                <span class="badge-soft me-1 mb-1" style="background-color:@ColorContrast.NormalizeHex(category.Color); color:@ColorContrast.TextColor(category.Color)">@category.Name</span>
                             }
                         </div>
                         <p class="small text-secondary flex-grow-1">@book.Synopsis</p>
@@ -138,8 +138,17 @@ else
                             <span class="price-tag">@book.Price.ToString("C")</span>
                             <span class="badge @(book.Available ? "text-bg-success" : "text-bg-secondary")">@(book.Available ? "Disponible" : "No disponible")</span>
                         </div>
-                        <div class="d-flex gap-2 mt-3">
-                            <a class="btn btn-sm btn-outline-primary flex-grow-1" asp-action="Details" asp-route-id="@book.Id">Ver detalle</a>
+                        <div class="d-flex flex-wrap gap-2 mt-3">
+                            <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@book.Id">Ver detalle</a>
+                            @if (User.Identity?.IsAuthenticated == true && book.Available)
+                            {
+                                <form asp-action="AddToCart" method="post" class="flex-grow-1">
+                                    <input type="hidden" name="id" value="@book.Id" />
+                                    <input type="hidden" name="quantity" value="1" />
+                                    <input type="hidden" name="returnUrl" value="@currentUrl" />
+                                    <button class="btn btn-sm btn-primary w-100" type="submit"><span aria-hidden="true">🛒</span> Añadir</button>
+                                </form>
+                            }
                             @if (User.Identity?.IsAuthenticated == true)
                             {
                                 <form asp-action="ToggleFavorite" method="post">

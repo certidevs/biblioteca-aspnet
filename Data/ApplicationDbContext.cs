@@ -18,7 +18,8 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Book> Books => Set<Book>();
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Review> Reviews => Set<Review>();
-    public DbSet<Purchase> Purchases => Set<Purchase>();
+    public DbSet<Order> Orders => Set<Order>();
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -89,20 +90,37 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        modelBuilder.Entity<Purchase>(entity =>
+        modelBuilder.Entity<Order>(entity =>
         {
-            entity.Property(purchase => purchase.PurchasedAt).IsRequired();
-            entity.Property(purchase => purchase.PriceAtPurchase).HasPrecision(10, 2);
+            entity.Property(order => order.CreatedAt).IsRequired();
+            entity.Property(order => order.Status)
+                .HasConversion<string>()
+                .HasMaxLength(30)
+                .IsRequired();
+            entity.Property(order => order.Total).HasPrecision(10, 2);
+            entity.Property(order => order.PaymentMethod).HasMaxLength(40).IsRequired();
+            entity.Property(order => order.PaymentLastFour).HasMaxLength(4);
 
-            entity.HasOne(purchase => purchase.Book)
-                .WithMany(book => book.Purchases)
-                .HasForeignKey(purchase => purchase.BookId)
+            entity.HasOne(order => order.User)
+                .WithMany(user => user.Orders)
+                .HasForeignKey(order => order.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<OrderItem>(entity =>
+        {
+            entity.Property(item => item.UnitPrice).HasPrecision(10, 2);
+            entity.Property(item => item.BookTitle).HasMaxLength(200).IsRequired();
+
+            entity.HasOne(item => item.Order)
+                .WithMany(order => order.Items)
+                .HasForeignKey(item => item.OrderId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            entity.HasOne(purchase => purchase.User)
-                .WithMany(user => user.Purchases)
-                .HasForeignKey(purchase => purchase.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(item => item.Book)
+                .WithMany(book => book.OrderItems)
+                .HasForeignKey(item => item.BookId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         // Many-to-many User ↔ Book para los favoritos.

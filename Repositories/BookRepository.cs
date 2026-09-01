@@ -85,6 +85,19 @@ public sealed class BookRepository : EfRepository<Book>, IBookRepository
             .SingleOrDefaultAsync(book => book.Id == id, cancellationToken);
     }
 
+    public Task<List<Book>> GetByIdsAsync(
+        IEnumerable<int> ids,
+        CancellationToken cancellationToken = default)
+    {
+        var selectedIds = ids.Distinct().ToArray();
+        return Context.Books
+            .AsNoTracking()
+            .Include(book => book.Author)
+            .Where(book => selectedIds.Contains(book.Id))
+            .OrderBy(book => book.Title)
+            .ToListAsync(cancellationToken);
+    }
+
     public Task<int> CountAsync(CancellationToken cancellationToken = default)
     {
         return Context.Books.CountAsync(cancellationToken);

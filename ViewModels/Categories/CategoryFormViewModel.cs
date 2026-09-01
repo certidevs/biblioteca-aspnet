@@ -15,6 +15,7 @@ public sealed class CategoryFormViewModel
     public string? Description { get; set; }
 
     [StringLength(20)]
+    [RegularExpression(@"^#[0-9a-fA-F]{6}$", ErrorMessage = "Usa un color hexadecimal como #2563eb.")]
     [Display(Name = "Color hexadecimal")]
     public string? Color { get; set; }
 }

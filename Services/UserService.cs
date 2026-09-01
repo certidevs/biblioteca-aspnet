@@ -68,8 +68,9 @@ public sealed class UserService : IUserService
             .Include(item => item.FavoriteBooks)
             .Include(item => item.Reviews)
             .ThenInclude(review => review.Book)
-            .Include(item => item.Purchases)
-            .ThenInclude(purchase => purchase.Book)
+            .Include(item => item.Orders)
+            .ThenInclude(order => order.Items)
+            .ThenInclude(orderItem => orderItem.Book)
             .AsSplitQuery()
             .SingleOrDefaultAsync(item => item.Id == userId, cancellationToken);
 
@@ -83,8 +84,10 @@ public sealed class UserService : IUserService
             User = user,
             FavoriteBooks = user.FavoriteBooks.OrderBy(book => book.Title).ToList(),
             Reviews = user.Reviews.OrderByDescending(review => review.CreatedAt).ToList(),
-            Purchases = user.Purchases.OrderByDescending(purchase => purchase.PurchasedAt).ToList(),
-            TotalSpent = user.Purchases.Sum(purchase => purchase.PriceAtPurchase)
+            Orders = user.Orders.OrderByDescending(order => order.CreatedAt).ToList(),
+            TotalSpent = user.Orders
+                .Where(order => order.Status == OrderStatus.Paid)
+                .Sum(order => order.Total)
         };
     }
 

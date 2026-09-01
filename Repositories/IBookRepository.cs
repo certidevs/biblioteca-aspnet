@@ -15,6 +15,7 @@ public interface IBookRepository : IRepository<Book>
 
     Task<Book?> GetDetailsAsync(int id, CancellationToken cancellationToken = default);
     Task<Book?> GetForEditAsync(int id, CancellationToken cancellationToken = default);
+    Task<List<Book>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default);
     Task<int> CountAsync(CancellationToken cancellationToken = default);
     Task<bool> IsFavoriteAsync(int bookId, string userId, CancellationToken cancellationToken = default);
     Task<bool> ToggleFavoriteAsync(int bookId, string userId, CancellationToken cancellationToken = default);

@@ -14,7 +14,7 @@ public static class PriceCalculator
 
     public static decimal CalculateTotal(
         IEnumerable<Book> books,
-        int previousPurchases = 0)
+        int previousOrders = 0)
     {
         var bookList = books.ToList();
         var total = bookList.Sum(book => book.Price);
@@ -24,7 +24,7 @@ public static class PriceCalculator
             total *= 1 - VolumeDiscountRate;
         }
 
-        if (previousPurchases >= LoyaltyThreshold)
+        if (previousOrders >= LoyaltyThreshold)
         {
             total *= 1 - LoyaltyDiscountRate;
         }

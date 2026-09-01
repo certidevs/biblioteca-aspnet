@@ -1,0 +1,80 @@
+@model Order
+@inject IImageStorage ImageStorage
+@{
+    ViewData["Title"] = $"Pedido #{Model.Id}";
+    var canSeeUser = User.IsInRole(RoleNames.Admin) && Model.User is not null;
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+    <div>
+        <a class="small text-decoration-none" asp-action="Index">← Volver a pedidos</a>
+        <span class="eyebrow d-block mt-3">Detalle de compra</span>
+        <h1 class="h2 mt-1 mb-1">Pedido #@Model.Id</h1>
+        <p class="text-secondary mb-0">Realizado el @Model.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</p>
+    </div>
+    <span class="badge @(Model.Status == OrderStatus.Paid ? "text-bg-success" : "text-bg-secondary") fs-6">@(Model.Status == OrderStatus.Paid ? "Pagado" : Model.Status.ToString())</span>
+</div>
+
+<div class="row g-4 align-items-start">
+    <div class="col-lg-8">
+        <section class="detail-panel">
+            <h2 class="h4 mb-3">Líneas del pedido</h2>
+            <div class="cart-list">
+                @foreach (var item in Model.Items)
+                {
+                    <article class="cart-item">
+                        <div class="cart-item-cover book-cover rounded-3">
+                            @if (item.Book is not null && ImageStorage.GetUrl(ImageFolder.BookCovers, item.Book.CoverImageFileName) is string coverUrl)
+                            {
+                                <img src="@coverUrl" alt="Portada de @item.BookTitle" />
+                            }
+                            else
+                            {
+                                <span aria-hidden="true">📖</span>
+                            }
+                        </div>
+                        <div class="cart-item-content d-flex justify-content-between align-items-center gap-3">
+                            <div>
+                                @if (item.BookId is int bookId)
+                                {
+                                    <h3 class="h5 mb-1"><a class="link-dark text-decoration-none" asp-controller="Books" asp-action="Details" asp-route-id="@bookId">@item.BookTitle</a></h3>
+                                }
+                                else
+                                {
+                                    <h3 class="h5 mb-1">@item.BookTitle</h3>
+                                    <p class="small text-secondary mb-0">Libro ya no disponible en el catálogo</p>
+                                }
+                                <p class="small text-secondary mb-0">@item.Quantity unidad(es) · @item.UnitPrice.ToString("C") por unidad</p>
+                            </div>
+                            <strong class="price-tag text-nowrap">@item.LineTotal.ToString("C")</strong>
+                        </div>
+                    </article>
+                }
+            </div>
+        </section>
+    </div>
+    <div class="col-lg-4">
+        <aside class="detail-panel checkout-summary">
+            <h2 class="h4">Resumen</h2>
+            <dl class="row book-meta mt-4 mb-4">
+                <dt class="col-7">Unidades</dt>
+                <dd class="col-5 text-end">@Model.Items.Sum(item => item.Quantity)</dd>
+                <dt class="col-7">Pago</dt>
+                <dd class="col-5 text-end">@Model.PaymentMethod</dd>
+                @if (Model.PaymentLastFour is not null)
+                {
+                    <dt class="col-7">Tarjeta</dt>
+                    <dd class="col-5 text-end">•••• @Model.PaymentLastFour</dd>
+                }
+            </dl>
+            <div class="d-flex justify-content-between border-top pt-3">
+                <strong>Total</strong>
+                <strong class="price-tag fs-4">@Model.Total.ToString("C")</strong>
+            </div>
+            @if (canSeeUser)
+            {
+                <p class="small text-secondary mt-3 mb-0">Usuario: @Model.User!.DisplayName (@Model.User.UserName)</p>
+            }
+        </aside>
+    </div>
+</div>

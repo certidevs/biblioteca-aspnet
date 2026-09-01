@@ -1,0 +1,81 @@
+@model CheckoutPageViewModel
+@inject IImageStorage ImageStorage
+@{
+    ViewData["Title"] = "Pago";
+}
+
+<div class="mb-4">
+    <a class="small text-decoration-none" asp-action="Index">← Volver al carrito</a>
+    <span class="eyebrow d-block mt-3">Checkout ficticio</span>
+    <h1 class="h2 mt-1 mb-1">Finalizar pedido</h1>
+    <p class="text-secondary mb-0">Introduce datos de prueba para simular el pago. Nunca se guardan la tarjeta completa ni el CVV.</p>
+</div>
+
+<div class="row g-4 align-items-start">
+    <div class="col-lg-7">
+        <section class="form-panel">
+            <div class="d-flex align-items-start gap-3 mb-4">
+                <div class="checkout-icon" aria-hidden="true">💳</div>
+                <div>
+                    <h2 class="h4 mb-1">Datos de pago</h2>
+                    <p class="small text-secondary mb-0">Pasarela simulada para practicar un flujo de checkout.</p>
+                </div>
+            </div>
+
+            <form asp-action="Checkout" method="post">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                <div class="mb-3">
+                    <label asp-for="Payment.CardholderName" class="form-label"></label>
+                    <input asp-for="Payment.CardholderName" class="form-control" autocomplete="cc-name" placeholder="Ada Lovelace" />
+                    <span asp-validation-for="Payment.CardholderName" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Payment.CardNumber" class="form-label"></label>
+                    <input asp-for="Payment.CardNumber" class="form-control" autocomplete="cc-number" inputmode="numeric" placeholder="4242 4242 4242 4242" />
+                    <span asp-validation-for="Payment.CardNumber" class="text-danger"></span>
+                    <div class="form-text">Tarjeta de prueba: <code>4242 4242 4242 4242</code></div>
+                </div>
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <label asp-for="Payment.Expiry" class="form-label"></label>
+                        <input asp-for="Payment.Expiry" class="form-control" autocomplete="cc-exp" placeholder="12/30" />
+                        <span asp-validation-for="Payment.Expiry" class="text-danger"></span>
+                    </div>
+                    <div class="col-sm-6">
+                        <label asp-for="Payment.Cvv" class="form-label"></label>
+                        <input asp-for="Payment.Cvv" class="form-control" autocomplete="cc-csc" inputmode="numeric" placeholder="123" />
+                        <span asp-validation-for="Payment.Cvv" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="d-flex flex-wrap justify-content-between gap-2 mt-4 pt-3 border-top">
+                    <a class="btn btn-outline-secondary" asp-action="Index">Cancelar</a>
+                    <button class="btn btn-primary" type="submit">Pagar @Model.Cart.Total.ToString("C")</button>
+                </div>
+            </form>
+        </section>
+    </div>
+    <div class="col-lg-5">
+        <aside class="detail-panel checkout-summary">
+            <span class="eyebrow">Resumen del pedido</span>
+            <h2 class="h4 mt-1">@Model.Cart.ItemCount unidad(es)</h2>
+            <ul class="list-group list-group-flush mt-3 mb-3">
+                @foreach (var item in Model.Cart.Items)
+                {
+                    <li class="list-group-item px-0 d-flex justify-content-between gap-3">
+                        <span>@item.Book.Title <small class="text-secondary">× @item.Quantity</small></span>
+                        <strong>@item.LineTotal.ToString("C")</strong>
+                    </li>
+                }
+            </ul>
+            <div class="d-flex justify-content-between border-top pt-3">
+                <strong>Total</strong>
+                <strong class="price-tag fs-4">@Model.Cart.Total.ToString("C")</strong>
+            </div>
+            <p class="small text-secondary mt-3 mb-0">Al completar el formulario se creará un pedido con estado <strong>Pagado</strong>.</p>
+        </aside>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

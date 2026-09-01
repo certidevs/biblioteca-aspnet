@@ -14,5 +14,5 @@ public sealed class ApplicationUser : IdentityUser
 
     public ICollection<Book> FavoriteBooks { get; set; } = new List<Book>();
     public ICollection<Review> Reviews { get; set; } = new List<Review>();
-    public ICollection<Purchase> Purchases { get; set; } = new List<Purchase>();
+    public ICollection<Order> Orders { get; set; } = new List<Order>();
 }
