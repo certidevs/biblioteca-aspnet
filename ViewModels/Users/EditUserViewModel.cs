@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace BibliotecaAspNet.ViewModels.Users;
 
+/// <summary>Datos editables de una cuenta desde el panel de administración.</summary>
 public sealed class EditUserViewModel
 {
     public string Id { get; set; } = string.Empty;

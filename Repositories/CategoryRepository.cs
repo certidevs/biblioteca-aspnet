@@ -4,13 +4,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BibliotecaAspNet.Repositories;
 
+/// <summary>Acceso a categorías y a los libros que agrupan.</summary>
 public sealed class CategoryRepository : EfRepository<Category>, ICategoryRepository
 {
+    /// <summary>Inicializa el repositorio con el contexto de la petición.</summary>
     public CategoryRepository(ApplicationDbContext context)
         : base(context)
     {
     }
 
+    /// <summary>Construye el listado de categorías con el filtro opcional.</summary>
     public Task<List<Category>> SearchAsync(
         string? search,
         CancellationToken cancellationToken = default)
@@ -20,6 +23,7 @@ public sealed class CategoryRepository : EfRepository<Category>, ICategoryReposi
             .Include(category => category.Books)
             .AsQueryable();
 
+        // La misma caja de búsqueda mira el nombre y la descripción.
         if (!string.IsNullOrWhiteSpace(search))
         {
             var value = search.Trim();
@@ -33,6 +37,7 @@ public sealed class CategoryRepository : EfRepository<Category>, ICategoryReposi
             .ToListAsync(cancellationToken);
     }
 
+    /// <summary>Carga una categoría con libros y autores para su página de detalle.</summary>
     public Task<Category?> GetDetailsAsync(
         int id,
         CancellationToken cancellationToken = default)
@@ -44,6 +49,7 @@ public sealed class CategoryRepository : EfRepository<Category>, ICategoryReposi
             .SingleOrDefaultAsync(category => category.Id == id, cancellationToken);
     }
 
+    /// <summary>Recupera categorías existentes para reconstruir un vínculo N:M.</summary>
     public Task<List<Category>> GetByIdsAsync(
         IEnumerable<int> ids,
         CancellationToken cancellationToken = default)
@@ -54,11 +60,13 @@ public sealed class CategoryRepository : EfRepository<Category>, ICategoryReposi
             .ToListAsync(cancellationToken);
     }
 
+    /// <summary>Cuenta categorías directamente en la base de datos.</summary>
     public Task<int> CountAsync(CancellationToken cancellationToken = default)
     {
         return Context.Categories.CountAsync(cancellationToken);
     }
 
+    /// <summary>Comprueba el nombre ignorando el registro actual durante una edición.</summary>
     public Task<bool> ExistsByNameAsync(
         string name,
         int? excludingId = null,

@@ -1,6 +1,7 @@
 @model BookListViewModel
 @inject IImageStorage ImageStorage
 @{
+    @* Los filtros se leen de la query string para que el resultado sea enlazable y refrescable. *@
     ViewData["Title"] = "Libros";
     var currentUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
     var hasFilters = !string.IsNullOrWhiteSpace(Model.Search)
@@ -125,6 +126,7 @@
 else
 {
     <div class="row g-4">
+        @* Cada tarjeta representa el slice de lectura de la entidad Book. *@
         @foreach (var book in Model.Books)
         {
             var isFavorite = Model.CurrentUserId is not null && book.FavoriteUsers.Any(user => user.Id == Model.CurrentUserId);

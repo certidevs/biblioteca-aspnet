@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace BibliotecaAspNet.ViewModels.Orders;
 
+/// <summary>Datos de tarjeta ficticia; nunca se convierte en una entidad persistente.</summary>
 public sealed class CheckoutViewModel
 {
     [Required(ErrorMessage = "El titular es obligatorio.")]

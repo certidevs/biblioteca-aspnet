@@ -42,6 +42,9 @@ Las imágenes se guardan fuera de Git en `wwwroot/uploads/avatars` y
 `wwwroot/uploads/book-covers`. La base de datos solo almacena un nombre aleatorio
 generado por la aplicación, no la ruta ni el nombre original del archivo.
 
+La explicación guiada de las asociaciones, el flujo de una petición y el checklist
+para añadir una entidad está en [`docs/GUÍA-CÓDIGO.md`](docs/GUÍA-CÓDIGO.md).
+
 ## Base común para los proyectos de grupos
 
 La parte de usuarios está pensada como infraestructura transversal. Al crear un
@@ -93,6 +96,7 @@ ViewModels/      # DTOs de formularios y páginas
 Views/           # Razor Views y layout común Bootstrap
 Utilities/       # Lógica pura reutilizable: ISBN, estadísticas y precios
 Data/Migrations/ # Historial versionado del esquema
+docs/           # Guías docentes del modelo y del flujo de una petición
 ```
 
 Piezas concretas de la base común:

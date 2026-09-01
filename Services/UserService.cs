@@ -18,6 +18,7 @@ public sealed class UserService : IUserService
     private readonly RoleManager<IdentityRole> roleManager;
     private readonly IImageStorage images;
 
+    /// <summary>Recibe Identity, EF Core y almacenamiento de imágenes por DI.</summary>
     public UserService(
         ApplicationDbContext context,
         UserManager<ApplicationUser> userManager,
@@ -30,11 +31,13 @@ public sealed class UserService : IUserService
         this.images = images;
     }
 
+    /// <summary>Busca usuarios y añade a cada fila su rol principal.</summary>
     public async Task<List<UserListItemViewModel>> SearchAsync(
         string? search,
         CancellationToken cancellationToken = default)
     {
         var query = context.Users.AsNoTracking().AsQueryable();
+        // La búsqueda se traduce a SQL y no carga todos los usuarios antes de filtrar.
         if (!string.IsNullOrWhiteSpace(search))
         {
             var value = search.Trim();
@@ -59,6 +62,7 @@ public sealed class UserService : IUserService
         return result;
     }
 
+    /// <summary>Carga el perfil y todas las relaciones que se muestran en su resumen.</summary>
     public async Task<ProfileViewModel?> GetProfileAsync(
         string userId,
         CancellationToken cancellationToken = default)
@@ -91,6 +95,7 @@ public sealed class UserService : IUserService
         };
     }
 
+    /// <summary>Proyecta un usuario a un modelo seguro para editar datos y avatar.</summary>
     public async Task<ProfileEditViewModel?> GetProfileEditModelAsync(
         string userId,
         CancellationToken cancellationToken = default)
@@ -111,6 +116,7 @@ public sealed class UserService : IUserService
         };
     }
 
+    /// <summary>Actualiza datos personales y sustituye o elimina el avatar si procede.</summary>
     public async Task<IdentityResult> UpdateProfileAsync(
         string userId,
         ProfileEditViewModel model,
@@ -150,6 +156,7 @@ public sealed class UserService : IUserService
         user.AvatarFileName = newAvatarFileName
             ?? (model.RemoveAvatar ? null : oldAvatarFileName);
 
+        // Primero se actualiza Identity; solo después se elimina el avatar antiguo.
         var updateResult = await userManager.UpdateAsync(user);
         if (!updateResult.Succeeded)
         {
@@ -165,6 +172,7 @@ public sealed class UserService : IUserService
         return updateResult;
     }
 
+    /// <summary>Cambia la contraseña usando la verificación interna de Identity.</summary>
     public async Task<IdentityResult> ChangePasswordAsync(
         string userId,
         ChangePasswordViewModel model,
@@ -182,6 +190,7 @@ public sealed class UserService : IUserService
             model.NewPassword);
     }
 
+    /// <summary>Proyecta un usuario al formulario usado por un administrador.</summary>
     public async Task<EditUserViewModel?> GetEditModelAsync(
         string id,
         CancellationToken cancellationToken = default)
@@ -206,6 +215,7 @@ public sealed class UserService : IUserService
         };
     }
 
+    /// <summary>Actualiza una cuenta y protege las reglas del último administrador.</summary>
     public async Task<IdentityResult> UpdateAsync(
         EditUserViewModel model,
         string currentAdminId,
@@ -252,6 +262,7 @@ public sealed class UserService : IUserService
         }
 
         var currentRoles = await userManager.GetRolesAsync(user);
+        // Se mantiene un único rol para que el ejemplo sea fácil de razonar.
         if (currentRoles.Count != 1 || currentRoles[0] != model.Role)
         {
             var removeResult = await userManager.RemoveFromRolesAsync(user, currentRoles);
@@ -266,6 +277,7 @@ public sealed class UserService : IUserService
         return IdentityResult.Success;
     }
 
+    /// <summary>Crea una cuenta, asigna rol y guarda su avatar opcional.</summary>
     public async Task<IdentityResult> CreateAsync(
         CreateUserViewModel model,
         CancellationToken cancellationToken = default)
@@ -290,6 +302,7 @@ public sealed class UserService : IUserService
             return createResult;
         }
 
+        // Si falla la asignación del rol, se deshace el usuario recién creado.
         var roleResult = await userManager.AddToRoleAsync(user, model.Role);
         if (!roleResult.Succeeded)
         {
@@ -322,6 +335,7 @@ public sealed class UserService : IUserService
         return IdentityResult.Success;
     }
 
+    /// <summary>Elimina una cuenta sin permitir borrar la propia ni el último admin.</summary>
     public async Task<IdentityResult> DeleteAsync(
         string id,
         string currentAdminId,
@@ -338,6 +352,7 @@ public sealed class UserService : IUserService
             return Failure("El usuario no existe.");
         }
 
+        // Evita dejar el panel de administración sin ninguna cuenta administradora.
         if (await userManager.IsInRoleAsync(user, RoleNames.Admin))
         {
             var administrators = await userManager.GetUsersInRoleAsync(RoleNames.Admin);
@@ -357,6 +372,7 @@ public sealed class UserService : IUserService
         return result;
     }
 
+    /// <summary>Crea un resultado de Identity con un mensaje de validación de negocio.</summary>
     private static IdentityResult Failure(string message) =>
         IdentityResult.Failed(new IdentityError { Description = message });
 }

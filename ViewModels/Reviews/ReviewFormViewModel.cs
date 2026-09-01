@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace BibliotecaAspNet.ViewModels.Reviews;
 
+/// <summary>DTO del formulario de reseña; el UserId se obtiene de Claims en el servidor.</summary>
 public sealed class ReviewFormViewModel
 {
     public int Id { get; set; }

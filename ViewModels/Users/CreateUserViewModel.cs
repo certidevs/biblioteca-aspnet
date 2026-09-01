@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace BibliotecaAspNet.ViewModels.Users;
 
+/// <summary>Datos que el administrador necesita para crear una cuenta.</summary>
 public sealed class CreateUserViewModel
 {
     [Required(ErrorMessage = "El nombre de usuario es obligatorio.")]

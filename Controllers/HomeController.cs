@@ -6,12 +6,14 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BibliotecaAspNet.Controllers;
 
+/// <summary>Página inicial con estadísticas y libros destacados.</summary>
 public sealed class HomeController : Controller
 {
     private readonly IBookService books;
     private readonly IAuthorService authors;
     private readonly ICategoryService categories;
 
+    /// <summary>Recibe los servicios de catálogo para construir el dashboard.</summary>
     public HomeController(
         IBookService books,
         IAuthorService authors,
@@ -22,6 +24,7 @@ public sealed class HomeController : Controller
         this.categories = categories;
     }
 
+    /// <summary>GET: carga contadores y los primeros libros disponibles.</summary>
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
         var featuredBooks = await books.SearchAsync(
@@ -45,6 +48,7 @@ public sealed class HomeController : Controller
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    /// <summary>GET: prepara la vista de error sin guardar datos de la petición.</summary>
     public IActionResult Error()
     {
         return View(new ErrorViewModel

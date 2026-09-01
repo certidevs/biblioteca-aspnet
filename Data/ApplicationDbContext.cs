@@ -9,18 +9,37 @@ namespace BibliotecaAspNet.Data;
 /// </summary>
 public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
+    /// <summary>
+    /// EF Core inyecta estas opciones desde <c>Program.cs</c> para saber qué proveedor
+    /// usar y cómo conectarse a SQLite.
+    /// </summary>
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)
     {
     }
 
+    /// <summary>Tabla de autores y punto de entrada para consultas LINQ.</summary>
     public DbSet<Author> Authors => Set<Author>();
+
+    /// <summary>Tabla de libros y punto de entrada para consultas LINQ.</summary>
     public DbSet<Book> Books => Set<Book>();
+
+    /// <summary>Tabla de categorías y punto de entrada para consultas LINQ.</summary>
     public DbSet<Category> Categories => Set<Category>();
+
+    /// <summary>Tabla de reseñas y punto de entrada para consultas LINQ.</summary>
     public DbSet<Review> Reviews => Set<Review>();
+
+    /// <summary>Tabla de pedidos y punto de entrada para consultas LINQ.</summary>
     public DbSet<Order> Orders => Set<Order>();
+
+    /// <summary>Tabla de líneas de pedido y punto de entrada para consultas LINQ.</summary>
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
 
+    /// <summary>
+    /// Configura restricciones de columnas y cardinalidades que no se expresan
+    /// completamente con atributos de DataAnnotations.
+    /// </summary>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -48,11 +67,13 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(book => book.Synopsis).HasMaxLength(5000);
             entity.Property(book => book.CoverImageFileName).HasMaxLength(260);
 
+            // Un autor puede tener muchos libros; borrar el autor borra su catálogo.
             entity.HasOne(book => book.Author)
                 .WithMany(author => author.Books)
                 .HasForeignKey(book => book.AuthorId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // EF crea BookCategories para resolver la relación N:M sin una entidad extra.
             entity.HasMany(book => book.Categories)
                 .WithMany(category => category.Books)
                 .UsingEntity<Dictionary<string, object>>(
@@ -71,6 +92,7 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(category => category.Name).HasMaxLength(100).IsRequired();
             entity.Property(category => category.Description).HasMaxLength(1000);
             entity.Property(category => category.Color).HasMaxLength(20);
+            // Evita dos categorías con el mismo nombre aunque lleguen por peticiones distintas.
             entity.HasIndex(category => category.Name).IsUnique();
         });
 
@@ -79,6 +101,7 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(review => review.Comment).HasMaxLength(2000).IsRequired();
             entity.Property(review => review.CreatedAt).IsRequired();
 
+            // Al borrar un libro o usuario también se eliminan sus reseñas.
             entity.HasOne(review => review.Book)
                 .WithMany(book => book.Reviews)
                 .HasForeignKey(review => review.BookId)
@@ -101,6 +124,7 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(order => order.PaymentMethod).HasMaxLength(40).IsRequired();
             entity.Property(order => order.PaymentLastFour).HasMaxLength(4);
 
+            // Un usuario conserva todos sus pedidos; su histórico se consulta desde aquí.
             entity.HasOne(order => order.User)
                 .WithMany(user => user.Orders)
                 .HasForeignKey(order => order.UserId)
@@ -112,18 +136,20 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(item => item.UnitPrice).HasPrecision(10, 2);
             entity.Property(item => item.BookTitle).HasMaxLength(200).IsRequired();
 
+            // Borrar la cabecera borra sus líneas porque una línea no tiene sentido sin pedido.
             entity.HasOne(item => item.Order)
                 .WithMany(order => order.Items)
                 .HasForeignKey(item => item.OrderId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // Si se borra un libro, la línea conserva BookTitle y UnitPrice como histórico.
             entity.HasOne(item => item.Book)
                 .WithMany(book => book.OrderItems)
                 .HasForeignKey(item => item.BookId)
                 .OnDelete(DeleteBehavior.SetNull);
         });
 
-        // Many-to-many User ↔ Book para los favoritos.
+        // Many-to-many User ↔ Book para los favoritos, mediante UserFavorites.
         modelBuilder.Entity<ApplicationUser>()
             .HasMany(user => user.FavoriteBooks)
             .WithMany(book => book.FavoriteUsers)

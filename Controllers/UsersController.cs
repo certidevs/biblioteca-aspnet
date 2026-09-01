@@ -9,16 +9,19 @@ using System.Security.Claims;
 namespace BibliotecaAspNet.Controllers;
 
 [Authorize(Roles = RoleNames.Admin)]
+/// <summary>Panel administrativo de cuentas, roles, estado y avatares.</summary>
 public sealed class UsersController : Controller
 {
     private readonly IUserService users;
 
+    /// <summary>Recibe los casos de uso comunes de usuarios.</summary>
     public UsersController(IUserService users)
     {
         this.users = users;
     }
 
     [HttpGet]
+    /// <summary>GET: lista y busca cuentas de usuario.</summary>
     public async Task<IActionResult> Index(string? search, CancellationToken cancellationToken)
     {
         ViewData["Search"] = search;
@@ -26,9 +29,11 @@ public sealed class UsersController : Controller
     }
 
     [HttpGet]
+    /// <summary>GET: muestra el formulario de alta administrativa.</summary>
     public IActionResult Create() => View(new CreateUserViewModel());
 
     [HttpPost]
+    /// <summary>POST: crea una cuenta con rol, estado y avatar opcional.</summary>
     public async Task<IActionResult> Create(
         CreateUserViewModel model,
         CancellationToken cancellationToken)
@@ -50,6 +55,7 @@ public sealed class UsersController : Controller
     }
 
     [HttpGet]
+    /// <summary>GET: muestra el perfil y actividad de una cuenta.</summary>
     public async Task<IActionResult> Details(string id, CancellationToken cancellationToken)
     {
         var model = await users.GetProfileAsync(id, cancellationToken);
@@ -57,6 +63,7 @@ public sealed class UsersController : Controller
     }
 
     [HttpGet]
+    /// <summary>GET: carga una cuenta en el formulario de administración.</summary>
     public async Task<IActionResult> Edit(string id, CancellationToken cancellationToken)
     {
         var model = await users.GetEditModelAsync(id, cancellationToken);
@@ -64,6 +71,7 @@ public sealed class UsersController : Controller
     }
 
     [HttpPost]
+    /// <summary>POST: actualiza datos, rol, estado y contraseña opcional.</summary>
     public async Task<IActionResult> Edit(
         string id,
         EditUserViewModel model,
@@ -101,6 +109,7 @@ public sealed class UsersController : Controller
     }
 
     [HttpGet]
+    /// <summary>GET: muestra la confirmación de borrado de una cuenta.</summary>
     public async Task<IActionResult> Delete(string id, CancellationToken cancellationToken)
     {
         var model = await users.GetProfileAsync(id, cancellationToken);
@@ -108,6 +117,7 @@ public sealed class UsersController : Controller
     }
 
     [HttpPost, ActionName("Delete")]
+    /// <summary>POST: elimina la cuenta respetando las reglas del último administrador.</summary>
     public async Task<IActionResult> DeleteConfirmed(
         string id,
         CancellationToken cancellationToken)
@@ -129,6 +139,7 @@ public sealed class UsersController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    /// <summary>Convierte errores de Identity en mensajes del formulario.</summary>
     private void AddIdentityErrors(IdentityResult result)
     {
         foreach (var error in result.Errors)

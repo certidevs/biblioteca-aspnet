@@ -7,11 +7,13 @@ using System.Security.Claims;
 namespace BibliotecaAspNet.Controllers;
 
 [Authorize]
+/// <summary>Carrito temporal y checkout de la sesión autenticada.</summary>
 public sealed class CartController : Controller
 {
     private readonly ICartService cartService;
     private readonly IOrderService orders;
 
+    /// <summary>Recibe los servicios de carrito y pedidos.</summary>
     public CartController(ICartService cartService, IOrderService orders)
     {
         this.cartService = cartService;
@@ -19,12 +21,14 @@ public sealed class CartController : Controller
     }
 
     [HttpGet]
+    /// <summary>GET: muestra las líneas válidas del carrito.</summary>
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
         return View(await cartService.GetAsync(cancellationToken));
     }
 
     [HttpPost]
+    /// <summary>POST: cambia unidades o quita la línea si la cantidad es cero.</summary>
     public async Task<IActionResult> Update(
         int id,
         int quantity,
@@ -46,6 +50,7 @@ public sealed class CartController : Controller
     }
 
     [HttpPost]
+    /// <summary>POST: elimina un libro concreto del carrito.</summary>
     public IActionResult Remove(int id)
     {
         cartService.Remove(id);
@@ -54,6 +59,7 @@ public sealed class CartController : Controller
     }
 
     [HttpPost]
+    /// <summary>POST: vacía el carrito completo.</summary>
     public IActionResult Clear()
     {
         cartService.Clear();
@@ -62,6 +68,7 @@ public sealed class CartController : Controller
     }
 
     [HttpGet]
+    /// <summary>GET: muestra el resumen y el formulario de pago ficticio.</summary>
     public async Task<IActionResult> Checkout(CancellationToken cancellationToken)
     {
         var cart = await cartService.GetAsync(cancellationToken);
@@ -75,6 +82,7 @@ public sealed class CartController : Controller
     }
 
     [HttpPost]
+    /// <summary>POST: valida el pago y crea el pedido persistente.</summary>
     public async Task<IActionResult> Checkout(
         CheckoutPageViewModel model,
         CancellationToken cancellationToken)

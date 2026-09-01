@@ -4,13 +4,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BibliotecaAspNet.Repositories;
 
+/// <summary>Acceso a libros y consultas del catálogo.</summary>
 public sealed class BookRepository : EfRepository<Book>, IBookRepository
 {
+    /// <summary>Inicializa el repositorio con el contexto de la petición.</summary>
     public BookRepository(ApplicationDbContext context)
         : base(context)
     {
     }
 
+    /// <summary>Compone la consulta de catálogo con filtros y relaciones de lectura.</summary>
     public Task<List<Book>> SearchAsync(
         string? search,
         int? authorId,
@@ -28,6 +31,7 @@ public sealed class BookRepository : EfRepository<Book>, IBookRepository
             .AsSplitQuery()
             .AsQueryable();
 
+        // Cada Where se traduce a SQL y solo se incorporan los filtros seleccionados.
         if (!string.IsNullOrWhiteSpace(search))
         {
             var value = search.Trim();
@@ -61,6 +65,7 @@ public sealed class BookRepository : EfRepository<Book>, IBookRepository
             .ToListAsync(cancellationToken);
     }
 
+    /// <summary>Carga la ficha completa de un libro, incluida la actividad de usuarios.</summary>
     public Task<Book?> GetDetailsAsync(
         int id,
         CancellationToken cancellationToken = default)
@@ -76,6 +81,7 @@ public sealed class BookRepository : EfRepository<Book>, IBookRepository
             .SingleOrDefaultAsync(book => book.Id == id, cancellationToken);
     }
 
+    /// <summary>Carga el libro con categorías rastreadas para editar la relación N:M.</summary>
     public Task<Book?> GetForEditAsync(
         int id,
         CancellationToken cancellationToken = default)
@@ -85,6 +91,7 @@ public sealed class BookRepository : EfRepository<Book>, IBookRepository
             .SingleOrDefaultAsync(book => book.Id == id, cancellationToken);
     }
 
+    /// <summary>Obtiene los libros existentes para un conjunto de IDs, como los del carrito.</summary>
     public Task<List<Book>> GetByIdsAsync(
         IEnumerable<int> ids,
         CancellationToken cancellationToken = default)
@@ -98,11 +105,13 @@ public sealed class BookRepository : EfRepository<Book>, IBookRepository
             .ToListAsync(cancellationToken);
     }
 
+    /// <summary>Cuenta libros directamente en la base de datos.</summary>
     public Task<int> CountAsync(CancellationToken cancellationToken = default)
     {
         return Context.Books.CountAsync(cancellationToken);
     }
 
+    /// <summary>Comprueba el favorito sin cargar el libro completo.</summary>
     public Task<bool> IsFavoriteAsync(
         int bookId,
         string userId,
@@ -112,6 +121,7 @@ public sealed class BookRepository : EfRepository<Book>, IBookRepository
             .AnyAsync(book => book.Id == bookId && book.FavoriteUsers.Any(user => user.Id == userId), cancellationToken);
     }
 
+    /// <summary>Modifica la tabla intermedia UserFavorites y devuelve el nuevo estado.</summary>
     public async Task<bool> ToggleFavoriteAsync(
         int bookId,
         string userId,
@@ -127,6 +137,7 @@ public sealed class BookRepository : EfRepository<Book>, IBookRepository
             return false;
         }
 
+        // Las navegaciones permiten añadir o quitar la fila N:M de forma legible.
         var alreadyFavorite = book.FavoriteUsers.Any(item => item.Id == userId);
         if (alreadyFavorite)
         {

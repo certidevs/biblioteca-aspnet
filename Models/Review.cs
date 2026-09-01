@@ -2,8 +2,13 @@ using System.ComponentModel.DataAnnotations;
 
 namespace BibliotecaAspNet.Models;
 
+/// <summary>
+/// Opinión de un usuario sobre un libro. Tanto <see cref="UserId"/> como
+/// <see cref="BookId"/> son FKs obligatorias: la reseña siempre tiene autor y libro.
+/// </summary>
 public sealed class Review
 {
+    /// <summary>Identificador generado por la base de datos.</summary>
     public int Id { get; set; }
 
     [Required(ErrorMessage = "El comentario es obligatorio.")]
@@ -15,9 +20,15 @@ public sealed class Review
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    /// <summary>FK del usuario que publicó la reseña; relación N:1 con ApplicationUser.</summary>
     public string UserId { get; set; } = string.Empty;
+
+    /// <summary>Usuario que publicó la reseña; navegación inversa de <see cref="ApplicationUser.Reviews"/>.</summary>
     public ApplicationUser User { get; set; } = null!;
 
+    /// <summary>FK del libro reseñado; relación N:1 con Book.</summary>
     public int BookId { get; set; }
+
+    /// <summary>Libro al que pertenece la reseña; navegación inversa de <see cref="Book.Reviews"/>.</summary>
     public Book Book { get; set; } = null!;
 }

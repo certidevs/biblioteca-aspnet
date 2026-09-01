@@ -6,16 +6,19 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BibliotecaAspNet.Controllers;
 
+/// <summary>Acciones MVC del CRUD de autores.</summary>
 public sealed class AuthorsController : Controller
 {
     private readonly IAuthorService authors;
 
+    /// <summary>Recibe el servicio de autores mediante inyección de dependencias.</summary>
     public AuthorsController(IAuthorService authors)
     {
         this.authors = authors;
     }
 
     [HttpGet]
+    /// <summary>GET: muestra autores y aplica el texto de búsqueda.</summary>
     public async Task<IActionResult> Index(string? search, CancellationToken cancellationToken)
     {
         ViewData["Search"] = search;
@@ -23,6 +26,7 @@ public sealed class AuthorsController : Controller
     }
 
     [HttpGet]
+    /// <summary>GET: muestra un autor con sus libros.</summary>
     public async Task<IActionResult> Details(int id, CancellationToken cancellationToken)
     {
         var author = await authors.GetDetailsAsync(id, cancellationToken);
@@ -31,10 +35,12 @@ public sealed class AuthorsController : Controller
 
     [Authorize(Roles = RoleNames.Admin)]
     [HttpGet]
+    /// <summary>GET protegido: muestra el formulario de alta.</summary>
     public IActionResult Create() => View(new AuthorFormViewModel());
 
     [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
+    /// <summary>POST protegido: valida y persiste el nuevo autor.</summary>
     public async Task<IActionResult> Create(
         AuthorFormViewModel model,
         CancellationToken cancellationToken)
@@ -51,6 +57,7 @@ public sealed class AuthorsController : Controller
 
     [Authorize(Roles = RoleNames.Admin)]
     [HttpGet]
+    /// <summary>GET protegido: carga un autor en el formulario de edición.</summary>
     public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken)
     {
         var author = await authors.GetDetailsAsync(id, cancellationToken);
@@ -61,6 +68,7 @@ public sealed class AuthorsController : Controller
 
     [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
+    /// <summary>POST protegido: actualiza el autor después de validar el formulario.</summary>
     public async Task<IActionResult> Edit(
         int id,
         AuthorFormViewModel model,
@@ -87,6 +95,7 @@ public sealed class AuthorsController : Controller
 
     [Authorize(Roles = RoleNames.Admin)]
     [HttpGet]
+    /// <summary>GET protegido: muestra la confirmación de borrado.</summary>
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
         var author = await authors.GetDetailsAsync(id, cancellationToken);
@@ -95,6 +104,7 @@ public sealed class AuthorsController : Controller
 
     [Authorize(Roles = RoleNames.Admin)]
     [HttpPost, ActionName("Delete")]
+    /// <summary>POST protegido: confirma el borrado del autor.</summary>
     public async Task<IActionResult> DeleteConfirmed(int id, CancellationToken cancellationToken)
     {
         if (!await authors.DeleteAsync(id, cancellationToken))
@@ -106,6 +116,7 @@ public sealed class AuthorsController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    /// <summary>Mapea el DTO de formulario a la entidad persistente.</summary>
     private static Author ToEntity(AuthorFormViewModel model) => new()
     {
         Id = model.Id,
@@ -115,6 +126,7 @@ public sealed class AuthorsController : Controller
         Nationality = model.Nationality
     };
 
+    /// <summary>Mapea la entidad a un DTO seguro para la vista de edición.</summary>
     private static AuthorFormViewModel ToViewModel(Author author) => new()
     {
         Id = author.Id,

@@ -2,6 +2,7 @@ using BibliotecaAspNet.Models;
 
 namespace BibliotecaAspNet.ViewModels.Books;
 
+/// <summary>Modelo de la página de catálogo: filtros, resultados y opciones.</summary>
 public sealed class BookListViewModel
 {
     public string? Search { get; init; }

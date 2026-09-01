@@ -3,25 +3,30 @@ using BibliotecaAspNet.Repositories;
 
 namespace BibliotecaAspNet.Services;
 
+/// <summary>Orquesta las operaciones de categorías y su regla de nombre único.</summary>
 public sealed class CategoryService : ICategoryService
 {
     private readonly ICategoryRepository categories;
 
+    /// <summary>Recibe el repositorio mediante inyección de dependencias.</summary>
     public CategoryService(ICategoryRepository categories)
     {
         this.categories = categories;
     }
 
+    /// <summary>Delega la búsqueda al repositorio.</summary>
     public Task<List<Category>> SearchAsync(string? search, CancellationToken cancellationToken = default)
     {
         return categories.SearchAsync(search, cancellationToken);
     }
 
+    /// <summary>Obtiene el detalle de una categoría.</summary>
     public Task<Category?> GetDetailsAsync(int id, CancellationToken cancellationToken = default)
     {
         return categories.GetDetailsAsync(id, cancellationToken);
     }
 
+    /// <summary>Comprueba duplicados antes de insertar la categoría.</summary>
     public async Task CreateAsync(Category category, CancellationToken cancellationToken = default)
     {
         if (await categories.ExistsByNameAsync(category.Name, cancellationToken: cancellationToken))
@@ -33,6 +38,7 @@ public sealed class CategoryService : ICategoryService
         await categories.SaveChangesAsync(cancellationToken);
     }
 
+    /// <summary>Actualiza la categoría y conserva la restricción de nombre único.</summary>
     public async Task<bool> UpdateAsync(
         int id,
         Category category,
@@ -56,6 +62,7 @@ public sealed class CategoryService : ICategoryService
         return true;
     }
 
+    /// <summary>Elimina la categoría si existe.</summary>
     public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
     {
         var category = await categories.GetByIdAsync(id, cancellationToken);
@@ -69,6 +76,7 @@ public sealed class CategoryService : ICategoryService
         return true;
     }
 
+    /// <summary>Devuelve el total de categorías.</summary>
     public Task<int> CountAsync(CancellationToken cancellationToken = default)
     {
         return categories.CountAsync(cancellationToken);

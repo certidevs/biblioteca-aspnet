@@ -4,6 +4,10 @@ using System.ComponentModel.DataAnnotations;
 
 namespace BibliotecaAspNet.ViewModels.Books;
 
+/// <summary>
+/// DTO de formulario para libros. Incluye IDs de asociaciones y listas para los
+/// desplegables, pero no expone la entidad completa al model binder.
+/// </summary>
 public sealed class BookFormViewModel
 {
     public int Id { get; set; }
@@ -49,11 +53,16 @@ public sealed class BookFormViewModel
     public int AuthorId { get; set; }
 
     [Display(Name = "Categorías")]
+    /// <summary>IDs enviados por el multiselect de la relación N:M con categorías.</summary>
     public int[] SelectedCategoryIds { get; set; } = Array.Empty<int>();
 
+    /// <summary>Opciones que el controlador carga para el selector de autor.</summary>
     public List<Author> Authors { get; set; } = new();
+
+    /// <summary>Opciones que el controlador carga para el multiselect de categorías.</summary>
     public List<Category> Categories { get; set; } = new();
 
+    /// <summary>Convierte una entidad en el modelo que necesita el formulario de edición.</summary>
     public static BookFormViewModel FromBook(Book book)
     {
         return new BookFormViewModel
@@ -73,6 +82,7 @@ public sealed class BookFormViewModel
         };
     }
 
+    /// <summary>Convierte los campos editables del formulario en una entidad Book.</summary>
     public Book ToBook()
     {
         return new Book

@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace BibliotecaAspNet.ViewModels.Account;
 
+/// <summary>Datos que envía la página de login; no es la entidad Identity.</summary>
 public sealed class LoginViewModel
 {
     [Required(ErrorMessage = "El usuario es obligatorio.")]

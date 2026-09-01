@@ -10,6 +10,7 @@ public static class ColorContrast
     private const string DarkText = "#122033";
     private const string LightText = "#ffffff";
 
+    /// <summary>Devuelve un hexadecimal válido o un fondo claro por defecto.</summary>
     public static string NormalizeHex(string? color)
     {
         if (string.IsNullOrWhiteSpace(color))
@@ -29,6 +30,7 @@ public static class ColorContrast
             : DefaultBackground;
     }
 
+    /// <summary>Elige texto blanco u oscuro según el contraste del fondo.</summary>
     public static string TextColor(string? backgroundColor)
     {
         var color = NormalizeHex(backgroundColor);
@@ -44,6 +46,7 @@ public static class ColorContrast
         return whiteContrast >= darkContrast ? LightText : DarkText;
     }
 
+    /// <summary>Convierte un canal sRGB para calcular luminancia relativa.</summary>
     private static double Linearize(double channel)
     {
         return channel <= 0.03928

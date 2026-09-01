@@ -6,11 +6,13 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BibliotecaAspNet.Controllers;
 
+/// <summary>Registro, login y logout mediante ASP.NET Core Identity.</summary>
 public sealed class AccountController : Controller
 {
     private readonly UserManager<ApplicationUser> userManager;
     private readonly SignInManager<ApplicationUser> signInManager;
 
+    /// <summary>Recibe los gestores de usuarios y sesiones de Identity.</summary>
     public AccountController(
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager)
@@ -21,6 +23,7 @@ public sealed class AccountController : Controller
 
     [HttpGet]
     [AllowAnonymous]
+    /// <summary>Muestra el formulario de inicio de sesión.</summary>
     public IActionResult Login(string? returnUrl = null)
     {
         ViewData["ReturnUrl"] = returnUrl;
@@ -30,6 +33,7 @@ public sealed class AccountController : Controller
 
     [HttpPost]
     [AllowAnonymous]
+    /// <summary>Valida credenciales y redirige a la URL local solicitada.</summary>
     public async Task<IActionResult> Login(
         LoginViewModel model,
         string? returnUrl = null,
@@ -73,6 +77,7 @@ public sealed class AccountController : Controller
 
     [HttpGet]
     [AllowAnonymous]
+    /// <summary>Muestra el formulario de registro.</summary>
     public IActionResult Register()
     {
         return View(new RegisterViewModel());
@@ -80,6 +85,7 @@ public sealed class AccountController : Controller
 
     [HttpPost]
     [AllowAnonymous]
+    /// <summary>Crea una cuenta User y la inicia automáticamente.</summary>
     public async Task<IActionResult> Register(
         RegisterViewModel model,
         CancellationToken cancellationToken = default)
@@ -122,6 +128,7 @@ public sealed class AccountController : Controller
 
     [Authorize]
     [HttpPost]
+    /// <summary>Cierra la sesión y limpia el carrito asociado al navegador.</summary>
     public async Task<IActionResult> Logout()
     {
         await signInManager.SignOutAsync();
@@ -132,11 +139,13 @@ public sealed class AccountController : Controller
 
     [HttpGet]
     [AllowAnonymous]
+    /// <summary>Muestra la página cuando Identity deniega una autorización.</summary>
     public IActionResult AccessDenied()
     {
         return View();
     }
 
+    /// <summary>Evita redirecciones externas al terminar el login.</summary>
     private IActionResult RedirectToLocal(string? returnUrl)
     {
         return Url.IsLocalUrl(returnUrl)
@@ -144,6 +153,7 @@ public sealed class AccountController : Controller
             : RedirectToAction("Index", "Home")!;
     }
 
+    /// <summary>Convierte errores de Identity en errores que puede pintar Razor.</summary>
     private void AddIdentityErrors(IdentityResult result)
     {
         foreach (var error in result.Errors)

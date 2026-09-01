@@ -2,8 +2,13 @@ using System.ComponentModel.DataAnnotations;
 
 namespace BibliotecaAspNet.Models;
 
+/// <summary>
+/// Entidad principal del catálogo. Sirve para practicar CRUD, filtros, imágenes,
+/// favoritos, reseñas y líneas de pedido.
+/// </summary>
 public sealed class Book
 {
+    /// <summary>Identificador generado por la base de datos.</summary>
     public int Id { get; set; }
 
     [Required(ErrorMessage = "El título es obligatorio.")]
@@ -38,12 +43,22 @@ public sealed class Book
     [StringLength(260)]
     public string? CoverImageFileName { get; set; }
 
+    /// <summary>FK obligatoria hacia el autor: muchos libros pueden pertenecer al mismo autor.</summary>
     [Required(ErrorMessage = "Selecciona un autor.")]
     public int AuthorId { get; set; }
 
+    /// <summary>Navegación N:1 hacia <see cref="Author"/>.</summary>
     public Author Author { get; set; } = null!;
+
+    /// <summary>Relación N:M con categorías, almacenada en la tabla intermedia BookCategories.</summary>
     public ICollection<Category> Categories { get; set; } = new List<Category>();
+
+    /// <summary>Reseñas publicadas para el libro: relación 1:N.</summary>
     public ICollection<Review> Reviews { get; set; } = new List<Review>();
+
+    /// <summary>Líneas de pedidos que originalmente compraron este libro.</summary>
     public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+
+    /// <summary>Usuarios que han marcado el libro como favorito: relación N:M.</summary>
     public ICollection<ApplicationUser> FavoriteUsers { get; set; } = new List<ApplicationUser>();
 }

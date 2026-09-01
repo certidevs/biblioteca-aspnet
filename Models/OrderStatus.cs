@@ -6,7 +6,12 @@ namespace BibliotecaAspNet.Models;
 /// </summary>
 public enum OrderStatus
 {
+    /// <summary>Pedido creado pero todavía no confirmado.</summary>
     Pending,
+
+    /// <summary>Pago ficticio aceptado y pedido confirmado.</summary>
     Paid,
+
+    /// <summary>Pedido cancelado.</summary>
     Cancelled
 }

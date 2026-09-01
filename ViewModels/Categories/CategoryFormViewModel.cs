@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace BibliotecaAspNet.ViewModels.Categories;
 
+/// <summary>Campos editables de una categoría para Create y Edit.</summary>
 public sealed class CategoryFormViewModel
 {
     public int Id { get; set; }

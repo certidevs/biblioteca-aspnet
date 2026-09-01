@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace BibliotecaAspNet.ViewModels.Account;
 
+/// <summary>Datos y confirmación de contraseña del formulario de registro.</summary>
 public sealed class RegisterViewModel
 {
     [Required(ErrorMessage = "El nombre de usuario es obligatorio.")]

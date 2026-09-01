@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace BibliotecaAspNet.ViewModels.Profile;
 
+/// <summary>Campos editables del perfil y archivo de avatar opcional.</summary>
 public sealed class ProfileEditViewModel
 {
     [Required(ErrorMessage = "El nombre visible es obligatorio.")]

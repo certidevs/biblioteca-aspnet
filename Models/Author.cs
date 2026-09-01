@@ -2,8 +2,13 @@ using System.ComponentModel.DataAnnotations;
 
 namespace BibliotecaAspNet.Models;
 
+/// <summary>
+/// Autor del catálogo. La relación es 1:N: un autor tiene muchos libros y
+/// cada libro apunta a un único autor mediante <see cref="Book.AuthorId"/>.
+/// </summary>
 public sealed class Author
 {
+    /// <summary>Identificador generado por la base de datos.</summary>
     public int Id { get; set; }
 
     [Required(ErrorMessage = "El nombre es obligatorio.")]
@@ -19,5 +24,6 @@ public sealed class Author
     [StringLength(80)]
     public string? Nationality { get; set; }
 
+    /// <summary>Libros escritos por este autor; es la navegación inversa de <see cref="Book.Author"/>.</summary>
     public ICollection<Book> Books { get; set; } = new List<Book>();
 }

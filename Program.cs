@@ -12,6 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("No se ha configurado la conexión DefaultConnection.");
 
+// DbContext se registra como scoped: una petición HTTP trabaja con una unidad de contexto.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(connectionString));
 
@@ -66,6 +67,7 @@ builder.Services.ConfigureApplicationCookie(options =>
     };
 });
 
+// MVC descubre controladores y vistas Razor; el filtro protege los formularios POST.
 builder.Services.AddControllersWithViews(options =>
 {
     // Protege automáticamente todos los POST/PUT/DELETE de los formularios MVC.
@@ -102,12 +104,14 @@ builder.Services.AddSingleton<IImageStorage, ImageStorage>();
 
 var app = builder.Build();
 
+// En desarrollo se muestran errores detallados; fuera de él se usa una página controlada.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
 
+// El orden del pipeline importa: primero recursos/rutas, después sesión y seguridad.
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();

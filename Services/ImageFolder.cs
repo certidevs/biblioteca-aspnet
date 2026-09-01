@@ -6,6 +6,9 @@ namespace BibliotecaAspNet.Services;
 /// </summary>
 public enum ImageFolder
 {
+    /// <summary>Avatares de usuarios.</summary>
     Avatars,
+
+    /// <summary>Portadas de libros.</summary>
     BookCovers
 }

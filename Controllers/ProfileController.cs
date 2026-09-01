@@ -9,12 +9,14 @@ using System.Security.Claims;
 namespace BibliotecaAspNet.Controllers;
 
 [Authorize]
+/// <summary>Consulta y edición del perfil del usuario autenticado.</summary>
 public sealed class ProfileController : Controller
 {
     private readonly IUserService users;
     private readonly UserManager<ApplicationUser> userManager;
     private readonly SignInManager<ApplicationUser> signInManager;
 
+    /// <summary>Recibe el servicio de usuarios y los gestores de sesión de Identity.</summary>
     public ProfileController(
         IUserService users,
         UserManager<ApplicationUser> userManager,
@@ -26,6 +28,7 @@ public sealed class ProfileController : Controller
     }
 
     [HttpGet]
+    /// <summary>GET: muestra datos personales, favoritos, reseñas y pedidos.</summary>
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -39,6 +42,7 @@ public sealed class ProfileController : Controller
     }
 
     [HttpGet]
+    /// <summary>GET: muestra el formulario de nombre, email y avatar.</summary>
     public async Task<IActionResult> Edit(CancellationToken cancellationToken)
     {
         var userId = GetUserId();
@@ -52,6 +56,7 @@ public sealed class ProfileController : Controller
     }
 
     [HttpPost]
+    /// <summary>POST: valida y actualiza el perfil del usuario actual.</summary>
     public async Task<IActionResult> Edit(
         ProfileEditViewModel model,
         CancellationToken cancellationToken)
@@ -82,9 +87,11 @@ public sealed class ProfileController : Controller
     }
 
     [HttpGet]
+    /// <summary>GET: muestra el formulario de cambio de contraseña.</summary>
     public IActionResult ChangePassword() => View(new ChangePasswordViewModel());
 
     [HttpPost]
+    /// <summary>POST: comprueba la contraseña actual y guarda la nueva.</summary>
     public async Task<IActionResult> ChangePassword(
         ChangePasswordViewModel model,
         CancellationToken cancellationToken)
@@ -112,8 +119,10 @@ public sealed class ProfileController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    /// <summary>Lee el ID estable de Identity desde las claims de la cookie.</summary>
     private string? GetUserId() => User.FindFirstValue(ClaimTypes.NameIdentifier);
 
+    /// <summary>Restaura el avatar actual cuando el formulario debe volver a mostrarse.</summary>
     private async Task RestoreCurrentAvatarAsync(
         ProfileEditViewModel model,
         string userId,
@@ -123,6 +132,7 @@ public sealed class ProfileController : Controller
         model.CurrentAvatarFileName = current?.CurrentAvatarFileName;
     }
 
+    /// <summary>Refresca la cookie para reflejar cambios del perfil inmediatamente.</summary>
     private async Task RefreshSignInAsync(string userId)
     {
         var user = await userManager.FindByIdAsync(userId);
@@ -132,6 +142,7 @@ public sealed class ProfileController : Controller
         }
     }
 
+    /// <summary>Traslada errores de Identity al resumen de validación de Razor.</summary>
     private void AddIdentityErrors(IdentityResult result)
     {
         foreach (var error in result.Errors)

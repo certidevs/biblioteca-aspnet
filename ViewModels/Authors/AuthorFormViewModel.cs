@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace BibliotecaAspNet.ViewModels.Authors;
 
+/// <summary>Campos editables de un autor para las vistas Create y Edit.</summary>
 public sealed class AuthorFormViewModel
 {
     public int Id { get; set; }

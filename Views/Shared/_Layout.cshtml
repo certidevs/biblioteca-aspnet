@@ -2,6 +2,7 @@
 @inject IImageStorage ImageStorage
 @inject ICartService CartService
 @{
+    @* El layout es la plantilla común: calcula navegación y datos de usuario una vez. *@
     var currentUser = User.Identity?.IsAuthenticated == true
         ? await UserManager.GetUserAsync(User)
         : null;
@@ -37,6 +38,7 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="mainNav">
+                @* La navegación cambia según autenticación y rol, pero las vistas no repiten este código. *@
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item"><a class='@NavClass("Home")' asp-controller="Home" asp-action="Index">Inicio</a></li>
                     <li class="nav-item"><a class='@NavClass("Books")' asp-controller="Books" asp-action="Index">Libros</a></li>
@@ -130,6 +132,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
             </div>
         }
+        @* Cada vista concreta se inserta aquí mediante RenderBody. *@
         @RenderBody()
     </main>
 

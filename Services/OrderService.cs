@@ -4,23 +4,30 @@ using BibliotecaAspNet.ViewModels.Orders;
 
 namespace BibliotecaAspNet.Services;
 
+/// <summary>
+/// Casos de uso de compra. El servicio vuelve a validar el carrito en el servidor
+/// porque nunca se debe confiar en precios o cantidades enviados por el navegador.
+/// </summary>
 public sealed class OrderService : IOrderService
 {
     private readonly IBookRepository books;
     private readonly IOrderRepository orders;
 
+    /// <summary>Recibe los repositorios de catálogo y pedidos.</summary>
     public OrderService(IBookRepository books, IOrderRepository orders)
     {
         this.books = books;
         this.orders = orders;
     }
 
+    /// <summary>Valida tarjeta demo, disponibilidad y crea el pedido con sus líneas.</summary>
     public async Task<CheckoutResult> CheckoutAsync(
         string userId,
         IReadOnlyDictionary<int, int> quantities,
         CheckoutViewModel payment,
         CancellationToken cancellationToken = default)
     {
+        // Se descartan IDs y cantidades imposibles antes de consultar la BD.
         var requestedLines = quantities
             .Where(item => item.Key > 0 && item.Value is >= 1 and <= 99)
             .ToDictionary(item => item.Key, item => item.Value);
@@ -29,6 +36,7 @@ public sealed class OrderService : IOrderService
             return new CheckoutResult(Error: "El carrito está vacío.");
         }
 
+        // La tarjeta es ficticia: solo se valida formato y checksum, nunca se persiste completa.
         var cardNumber = NormalizeCardNumber(payment.CardNumber);
         if (cardNumber.Length != 16 || !PassesLuhnCheck(cardNumber))
         {
@@ -56,6 +64,7 @@ public sealed class OrderService : IOrderService
             PaymentLastFour = cardNumber[^4..]
         };
 
+        // El precio se toma del catálogo actual y se copia a UnitPrice como histórico.
         foreach (var book in catalogBooks)
         {
             var quantity = requestedLines[book.Id];
@@ -74,6 +83,7 @@ public sealed class OrderService : IOrderService
         return new CheckoutResult(order);
     }
 
+    /// <summary>Lista los pedidos del usuario.</summary>
     public Task<List<Order>> GetForUserAsync(
         string userId,
         CancellationToken cancellationToken = default)
@@ -81,11 +91,13 @@ public sealed class OrderService : IOrderService
         return orders.GetForUserAsync(userId, cancellationToken);
     }
 
+    /// <summary>Lista todos los pedidos para administración.</summary>
     public Task<List<Order>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         return orders.GetAllWithDetailsAsync(cancellationToken);
     }
 
+    /// <summary>Obtiene un pedido respetando la visibilidad del usuario.</summary>
     public Task<Order?> GetDetailsAsync(
         int id,
         string? userId,
@@ -95,6 +107,7 @@ public sealed class OrderService : IOrderService
         return orders.GetDetailsAsync(id, userId, includeAllUsers, cancellationToken);
     }
 
+    /// <summary>Cuenta pedidos de un usuario.</summary>
     public Task<int> CountForUserAsync(
         string userId,
         CancellationToken cancellationToken = default)
@@ -102,6 +115,7 @@ public sealed class OrderService : IOrderService
         return orders.CountForUserAsync(userId, cancellationToken);
     }
 
+    /// <summary>Suma el gasto del usuario en pedidos pagados.</summary>
     public Task<decimal> TotalForUserAsync(
         string userId,
         CancellationToken cancellationToken = default)
@@ -109,11 +123,13 @@ public sealed class OrderService : IOrderService
         return orders.TotalForUserAsync(userId, cancellationToken);
     }
 
+    /// <summary>Elimina espacios y guiones para trabajar con los 16 dígitos.</summary>
     private static string NormalizeCardNumber(string? cardNumber)
     {
         return new string((cardNumber ?? string.Empty).Where(char.IsDigit).ToArray());
     }
 
+    /// <summary>Aplica el checksum de Luhn, habitual en validaciones de tarjetas.</summary>
     private static bool PassesLuhnCheck(string cardNumber)
     {
         var sum = 0;

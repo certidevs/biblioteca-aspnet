@@ -4,6 +4,10 @@ using Microsoft.AspNetCore.Http;
 
 namespace BibliotecaAspNet.Services;
 
+/// <summary>
+/// Casos de uso de libros. Aquí se coordinan repositorios, categorías y almacenamiento
+/// de imágenes antes de que el controlador devuelva una respuesta.
+/// </summary>
 public sealed class BookService : IBookService
 {
     private readonly IBookRepository books;
@@ -11,6 +15,7 @@ public sealed class BookService : IBookService
     private readonly ICategoryRepository categories;
     private readonly IImageStorage images;
 
+    /// <summary>Recibe las dependencias necesarias mediante inyección de dependencias.</summary>
     public BookService(
         IBookRepository books,
         IAuthorRepository authors,
@@ -23,6 +28,7 @@ public sealed class BookService : IBookService
         this.images = images;
     }
 
+    /// <summary>Busca libros con los filtros del catálogo.</summary>
     public Task<List<Book>> SearchAsync(
         string? search,
         int? authorId,
@@ -42,16 +48,19 @@ public sealed class BookService : IBookService
             cancellationToken);
     }
 
+    /// <summary>Obtiene la ficha pública de un libro.</summary>
     public Task<Book?> GetDetailsAsync(int id, CancellationToken cancellationToken = default)
     {
         return books.GetDetailsAsync(id, cancellationToken);
     }
 
+    /// <summary>Obtiene un libro con categorías rastreadas para el formulario de edición.</summary>
     public Task<Book?> GetForEditAsync(int id, CancellationToken cancellationToken = default)
     {
         return books.GetForEditAsync(id, cancellationToken);
     }
 
+    /// <summary>Valida autor, resuelve categorías y guarda libro y portada.</summary>
     public async Task CreateAsync(
         Book book,
         IEnumerable<int> categoryIds,
@@ -60,6 +69,7 @@ public sealed class BookService : IBookService
     {
         var author = await authors.GetByIdAsync(book.AuthorId, cancellationToken)
             ?? throw new InvalidOperationException("El autor seleccionado no existe.");
+        // Se cargan entidades existentes: el formulario solo envía sus IDs.
         var selectedCategories = await categories.GetByIdsAsync(categoryIds, cancellationToken);
 
         book.Author = author;
@@ -88,11 +98,13 @@ public sealed class BookService : IBookService
         }
         catch
         {
+            // Si falla la BD, no dejamos en disco una imagen huérfana.
             images.Delete(ImageFolder.BookCovers, newCoverFileName);
             throw;
         }
     }
 
+    /// <summary>Actualiza campos, asociaciones y portada de un libro existente.</summary>
     public async Task<bool> UpdateAsync(
         int id,
         Book book,
@@ -137,6 +149,7 @@ public sealed class BookService : IBookService
         existing.AuthorId = author.Id;
         existing.Author = author;
 
+        // Se reconstruye la colección N:M a partir de los IDs seleccionados.
         existing.Categories.Clear();
         foreach (var category in await categories.GetByIdsAsync(categoryIds, cancellationToken))
         {
@@ -149,6 +162,7 @@ public sealed class BookService : IBookService
         }
         catch
         {
+            // La nueva portada solo se conserva si también se guardó el libro.
             images.Delete(ImageFolder.BookCovers, newCoverFileName);
             throw;
         }
@@ -161,6 +175,7 @@ public sealed class BookService : IBookService
         return true;
     }
 
+    /// <summary>Elimina un libro y su portada si la operación tiene éxito.</summary>
     public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
     {
         var book = await books.GetByIdAsync(id, cancellationToken);
@@ -176,6 +191,7 @@ public sealed class BookService : IBookService
         return true;
     }
 
+    /// <summary>Cambia el favorito del usuario autenticado.</summary>
     public Task<bool> ToggleFavoriteAsync(
         int bookId,
         string userId,
@@ -184,6 +200,7 @@ public sealed class BookService : IBookService
         return books.ToggleFavoriteAsync(bookId, userId, cancellationToken);
     }
 
+    /// <summary>Devuelve el total de libros.</summary>
     public Task<int> CountAsync(CancellationToken cancellationToken = default)
     {
         return books.CountAsync(cancellationToken);

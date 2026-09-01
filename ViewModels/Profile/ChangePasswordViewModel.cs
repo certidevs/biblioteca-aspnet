@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace BibliotecaAspNet.ViewModels.Profile;
 
+/// <summary>Entrada del formulario de cambio de contraseña.</summary>
 public sealed class ChangePasswordViewModel
 {
     [Required(ErrorMessage = "La contraseña actual es obligatoria.")]

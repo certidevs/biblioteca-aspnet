@@ -2,6 +2,7 @@ using BibliotecaAspNet.Models;
 
 namespace BibliotecaAspNet.ViewModels.Home;
 
+/// <summary>Datos resumidos que necesita la página de inicio.</summary>
 public sealed class DashboardViewModel
 {
     public int BookCount { get; init; }

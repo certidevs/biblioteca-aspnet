@@ -17,12 +17,14 @@ public sealed class CartService : ICartService
     private readonly IHttpContextAccessor httpContextAccessor;
     private readonly IBookRepository books;
 
+    /// <summary>Recibe acceso a la petición y al catálogo para validar sus líneas.</summary>
     public CartService(IHttpContextAccessor httpContextAccessor, IBookRepository books)
     {
         this.httpContextAccessor = httpContextAccessor;
         this.books = books;
     }
 
+    /// <summary>Construye el modelo del carrito usando precios actuales del catálogo.</summary>
     public async Task<CartViewModel> GetAsync(CancellationToken cancellationToken = default)
     {
         var quantities = ReadQuantities();
@@ -32,6 +34,7 @@ public sealed class CartService : ICartService
         }
 
         var catalogBooks = await books.GetByIdsAsync(quantities.Keys, cancellationToken);
+        // Un libro borrado o agotado desaparece automáticamente del carrito.
         var validIds = catalogBooks
             .Where(book => book.Available)
             .Select(book => book.Id)
@@ -61,6 +64,7 @@ public sealed class CartService : ICartService
         };
     }
 
+    /// <summary>Añade unidades después de validar cantidad, existencia y disponibilidad.</summary>
     public async Task<CartOperationResult> AddAsync(
         int bookId,
         int quantity = 1,
@@ -89,6 +93,7 @@ public sealed class CartService : ICartService
         return new CartOperationResult(true);
     }
 
+    /// <summary>Establece la cantidad solicitada y elimina si llega cero.</summary>
     public async Task<CartOperationResult> SetQuantityAsync(
         int bookId,
         int quantity,
@@ -118,16 +123,19 @@ public sealed class CartService : ICartService
         return new CartOperationResult(true);
     }
 
+    /// <summary>Devuelve las cantidades para que checkout las valide otra vez.</summary>
     public IReadOnlyDictionary<int, int> GetQuantities()
     {
         return ReadQuantities();
     }
 
+    /// <summary>Calcula el contador que se muestra junto al icono del carrito.</summary>
     public int GetTotalQuantity()
     {
         return ReadQuantities().Values.Sum();
     }
 
+    /// <summary>Elimina una línea concreta y persiste la sesión.</summary>
     public void Remove(int bookId)
     {
         var quantities = ReadQuantities();
@@ -137,11 +145,13 @@ public sealed class CartService : ICartService
         }
     }
 
+    /// <summary>Elimina la clave completa del carrito en la sesión.</summary>
     public void Clear()
     {
         Session.Remove(SessionKey);
     }
 
+    /// <summary>Deserializa la sesión y descarta datos corruptos o fuera de rango.</summary>
     private Dictionary<int, int> ReadQuantities()
     {
         var json = Session.GetString(SessionKey);
@@ -161,11 +171,13 @@ public sealed class CartService : ICartService
         }
         catch (JsonException)
         {
+            // Una sesión corrupta no debe romper toda la página del catálogo.
             Session.Remove(SessionKey);
             return new Dictionary<int, int>();
         }
     }
 
+    /// <summary>Serializa solo IDs y cantidades; el precio nunca procede de la sesión.</summary>
     private void WriteQuantities(Dictionary<int, int> quantities)
     {
         if (quantities.Count == 0)
@@ -177,6 +189,7 @@ public sealed class CartService : ICartService
         Session.SetString(SessionKey, JsonSerializer.Serialize(quantities));
     }
 
+    /// <summary>Obtiene la sesión HTTP actual o informa de un uso fuera de una petición.</summary>
     private ISession Session => httpContextAccessor.HttpContext?.Session
         ?? throw new InvalidOperationException("No hay una sesión HTTP disponible para el carrito.");
 }

@@ -1,6 +1,7 @@
 @model BookFormViewModel
 @inject IImageStorage ImageStorage
 
+@* El mismo parcial se reutiliza en Create y Edit; la vista contenedora decide la acción POST. *@
 <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
 <section class="form-section">
@@ -93,6 +94,7 @@
     <span class="eyebrow">Organización</span>
     <h2 class="form-section-title">Categorías</h2>
     <div class="row g-2">
+        @* Un checkbox por categoría envía varios valores con el mismo nombre. *@
         @foreach (var category in Model.Categories)
         {
             var isSelected = Model.SelectedCategoryIds.Contains(category.Id);

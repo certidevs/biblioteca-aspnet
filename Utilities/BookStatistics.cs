@@ -12,6 +12,7 @@ public sealed record BookStatistics(
     decimal MinimumPrice,
     decimal MaximumPrice)
 {
+    /// <summary>Calcula estadísticas sin depender de MVC ni de EF Core.</summary>
     public static BookStatistics From(IEnumerable<Book> books)
     {
         var bookList = books.ToList();

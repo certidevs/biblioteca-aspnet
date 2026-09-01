@@ -20,6 +20,7 @@ public sealed class ImageStorage : IImageStorage
     private readonly ImageStorageOptions options;
     private readonly ILogger<ImageStorage> logger;
 
+    /// <summary>Calcula la raíz pública y carga las opciones de validación.</summary>
     public ImageStorage(
         IWebHostEnvironment environment,
         IOptions<ImageStorageOptions> options,
@@ -31,6 +32,7 @@ public sealed class ImageStorage : IImageStorage
         this.logger = logger;
     }
 
+    /// <summary>Valida extensión, tamaño y firma antes de guardar con nombre aleatorio.</summary>
     public async Task<ImageUploadResult> SaveAsync(
         IFormFile file,
         ImageFolder folder,
@@ -47,6 +49,7 @@ public sealed class ImageStorage : IImageStorage
             return ImageUploadResult.Failure($"La imagen no puede superar {megabytes:0.#} MB.");
         }
 
+        // El nombre original solo se usa para obtener la extensión, nunca para escribir la ruta.
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
         var allowedExtensions = options.AllowedExtensions
             .Select(value => value.Trim().ToLowerInvariant())
@@ -98,6 +101,7 @@ public sealed class ImageStorage : IImageStorage
         return ImageUploadResult.Success(new StoredImage(fileName, GetContentType(extension)));
     }
 
+    /// <summary>Elimina una imagen si el nombre no permite salir de su carpeta.</summary>
     public void Delete(ImageFolder folder, string? fileName)
     {
         if (string.IsNullOrWhiteSpace(fileName))
@@ -115,6 +119,7 @@ public sealed class ImageStorage : IImageStorage
         TryDelete(Path.Combine(GetDirectory(folder), safeFileName));
     }
 
+    /// <summary>Devuelve la URL pública segura para una imagen almacenada.</summary>
     public string? GetUrl(ImageFolder folder, string? fileName)
     {
         if (string.IsNullOrWhiteSpace(fileName))
@@ -138,6 +143,7 @@ public sealed class ImageStorage : IImageStorage
         return $"/uploads/{folderName}/{Uri.EscapeDataString(safeFileName)}";
     }
 
+    /// <summary>Mapea el enum de carpeta a un directorio permitido.</summary>
     private string GetDirectory(ImageFolder folder)
     {
         var folderName = folder switch
@@ -150,6 +156,7 @@ public sealed class ImageStorage : IImageStorage
         return Path.Combine(webRootPath, "uploads", folderName);
     }
 
+    /// <summary>Lee los primeros bytes necesarios para identificar la imagen.</summary>
     private static async Task<int> ReadHeaderAsync(
         Stream input,
         byte[] header,
@@ -170,6 +177,7 @@ public sealed class ImageStorage : IImageStorage
         return total;
     }
 
+    /// <summary>Comprueba firmas binarias básicas y no solo el Content-Type del navegador.</summary>
     private static bool LooksLikeSupportedImage(byte[] header, int length, string extension)
     {
         if (extension is ".jpg" or ".jpeg")
@@ -194,6 +202,7 @@ public sealed class ImageStorage : IImageStorage
             Encoding.ASCII.GetString(header, 8, 4) == "WEBP";
     }
 
+    /// <summary>Convierte la extensión validada en el MIME que usará la respuesta HTTP.</summary>
     private static string GetContentType(string extension) => extension switch
     {
         ".jpg" or ".jpeg" => "image/jpeg",
@@ -203,6 +212,7 @@ public sealed class ImageStorage : IImageStorage
         _ => "application/octet-stream"
     };
 
+    /// <summary>Intenta limpiar un archivo sin ocultar el resultado principal de la operación.</summary>
     private void TryDelete(string path)
     {
         try

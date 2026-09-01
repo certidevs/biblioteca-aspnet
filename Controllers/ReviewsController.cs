@@ -7,11 +7,13 @@ using System.Security.Claims;
 
 namespace BibliotecaAspNet.Controllers;
 
+/// <summary>Listado público y escritura moderada de reseñas.</summary>
 public sealed class ReviewsController : Controller
 {
     private readonly IReviewService reviews;
     private readonly IBookService books;
 
+    /// <summary>Recibe servicios de reseñas y libros.</summary>
     public ReviewsController(IReviewService reviews, IBookService books)
     {
         this.reviews = reviews;
@@ -19,6 +21,7 @@ public sealed class ReviewsController : Controller
     }
 
     [HttpGet]
+    /// <summary>GET: lista reseñas con filtro opcional de puntuación.</summary>
     public async Task<IActionResult> Index(int? rating, CancellationToken cancellationToken)
     {
         ViewData["Rating"] = rating;
@@ -27,6 +30,7 @@ public sealed class ReviewsController : Controller
 
     [Authorize]
     [HttpGet]
+    /// <summary>GET autenticado: muestra el formulario para un libro concreto.</summary>
     public async Task<IActionResult> Create(int bookId, CancellationToken cancellationToken)
     {
         var book = await books.GetDetailsAsync(bookId, cancellationToken);
@@ -44,6 +48,7 @@ public sealed class ReviewsController : Controller
 
     [Authorize]
     [HttpPost]
+    /// <summary>POST autenticado: crea la reseña usando el usuario de la cookie.</summary>
     public async Task<IActionResult> Create(
         ReviewFormViewModel model,
         CancellationToken cancellationToken)
@@ -86,6 +91,7 @@ public sealed class ReviewsController : Controller
 
     [Authorize]
     [HttpGet]
+    /// <summary>GET autenticado: carga una reseña si el usuario puede modificarla.</summary>
     public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken)
     {
         var review = await reviews.GetByIdAsync(id, cancellationToken);
@@ -112,6 +118,7 @@ public sealed class ReviewsController : Controller
 
     [Authorize]
     [HttpPost]
+    /// <summary>POST autenticado: actualiza comentario y puntuación.</summary>
     public async Task<IActionResult> Edit(
         int id,
         ReviewFormViewModel model,
@@ -157,6 +164,7 @@ public sealed class ReviewsController : Controller
 
     [Authorize]
     [HttpPost]
+    /// <summary>POST autenticado: elimina una reseña propia o moderada por un admin.</summary>
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);

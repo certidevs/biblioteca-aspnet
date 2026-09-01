@@ -5,6 +5,7 @@ namespace BibliotecaAspNet.Utilities;
 /// </summary>
 public static class IsbnValidator
 {
+    /// <summary>Normaliza guiones/espacios y valida ISBN-10 o ISBN-13.</summary>
     public static bool IsValid(string? isbn)
     {
         if (string.IsNullOrWhiteSpace(isbn))
@@ -25,6 +26,7 @@ public static class IsbnValidator
         };
     }
 
+    /// <summary>Valida el checksum ponderado de un ISBN-10.</summary>
     private static bool IsValidIsbn10(string value)
     {
         var sum = 0;
@@ -44,6 +46,7 @@ public static class IsbnValidator
         return sum % 11 == 0;
     }
 
+    /// <summary>Valida el checksum alterno de un ISBN-13.</summary>
     private static bool IsValidIsbn13(string value)
     {
         if (value.Any(character => !char.IsDigit(character)))

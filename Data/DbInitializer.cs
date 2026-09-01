@@ -9,9 +9,15 @@ namespace BibliotecaAspNet.Data;
 /// </summary>
 public static class DbInitializer
 {
+    /// <summary>
+    /// Aplica las migraciones y prepara roles, usuarios y datos demo.
+    /// Es idempotente: se puede ejecutar en cada arranque sin duplicar registros.
+    /// </summary>
     public static async Task InitializeAsync(IServiceProvider services)
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
+        // En producción las migraciones suelen ejecutarse desde el despliegue;
+        // aquí se automatiza para que el proyecto sea fácil de arrancar en clase.
         await context.Database.MigrateAsync();
 
         var configuration = services.GetRequiredService<IConfiguration>();
@@ -42,6 +48,7 @@ public static class DbInitializer
 
         if (await context.Authors.AnyAsync())
         {
+            // Esta rama permite actualizar una BD ya existente con nuevos datos demo.
             await EnsureMinimumDemoBooksAsync(context);
 
             // Si se parte de una BD creada antes de introducir pedidos y no había
@@ -218,6 +225,7 @@ public static class DbInitializer
         await context.SaveChangesAsync();
     }
 
+    /// <summary>Completa el catálogo hasta seis libros cuando la BD ya tenía datos.</summary>
     private static async Task EnsureMinimumDemoBooksAsync(ApplicationDbContext context)
     {
         if (await context.Books.CountAsync() >= 6)
@@ -283,6 +291,7 @@ public static class DbInitializer
         }
     }
 
+    /// <summary>Crea un pedido de ejemplo con una línea y datos de pago ficticios.</summary>
     private static Order CreateDemoOrder(
         string userId,
         Book book,
@@ -309,6 +318,7 @@ public static class DbInitializer
         };
     }
 
+    /// <summary>Crea un rol solo si todavía no existe.</summary>
     private static async Task EnsureRoleAsync(RoleManager<IdentityRole> roleManager, string role)
     {
         if (!await roleManager.RoleExistsAsync(role))
@@ -318,6 +328,7 @@ public static class DbInitializer
         }
     }
 
+    /// <summary>Crea un usuario demo si falta y garantiza que tenga el rol indicado.</summary>
     private static async Task<ApplicationUser> EnsureUserAsync(
         UserManager<ApplicationUser> userManager,
         string username,
@@ -350,6 +361,7 @@ public static class DbInitializer
         return user;
     }
 
+    /// <summary>Convierte un error de Identity en una excepción clara durante el arranque.</summary>
     private static void EnsureSucceeded(IdentityResult result, string message)
     {
         if (!result.Succeeded)
