@@ -60,7 +60,34 @@ Formulario Razor → POST del controller → ModelState
 La redirección posterior al POST evita reenviar el formulario al actualizar la página:
 es el patrón PRG (Post/Redirect/Get).
 
-## 3. `Models` y `ViewModels`
+## 3. Cómo leer una acción MVC
+
+`IActionResult` no es un objeto especial de negocio: es simplemente el tipo de
+respuesta de una acción MVC. Permite que una misma acción exprese con claridad las
+respuestas HTTP habituales:
+
+```csharp
+if (book is null)
+{
+    return NotFound();       // HTTP 404
+}
+
+return View(book);          // Renderiza Views/Books/Details.cshtml
+// return RedirectToAction(nameof(Index)); // Redirige después de un POST
+```
+
+La información de cada pantalla se entrega mediante un `ViewModel` tipado, igual que
+un DTO de respuesta. `ViewData["Title"]` se reserva únicamente para el título que
+consume el layout común; no se usa como un `Map<String, Object>` para los datos de la
+página. `TempData` es el mensaje flash de la siguiente petición, por ejemplo «Libro
+creado correctamente» tras una redirección.
+
+Las acciones con `[Authorize]` ya tienen una cookie válida. Por ello usan
+`User.GetRequiredUserId()`: es un nombre legible para extraer de los *claims* el ID de
+la cuenta actual, equivalente al principal autenticado que recibirías en un
+controlador de Spring Security.
+
+## 4. `Models` y `ViewModels`
 
 Un `ViewModel` es equivalente a un DTO de Spring Boot, pero suele organizarse por
 página. No es una capa complicada:
@@ -74,7 +101,7 @@ página. No es una capa complicada:
 Esto evita que un formulario pueda enviar propiedades que no debería cambiar, como
 colecciones completas de usuarios o el propietario de una reseña.
 
-## 4. Carrito y pedido
+## 5. Carrito y pedido
 
 `CartService` guarda en la sesión algo parecido a:
 
@@ -86,7 +113,7 @@ Son IDs y cantidades, no libros ni precios. `OrderService.Checkout` consulta de 
 SQLite, verifica que los libros siguen disponibles y copia título y precio a
 `OrderItem`. Así un pedido histórico no cambia aunque más tarde cambie el catálogo.
 
-## 5. Usuarios con Identity
+## 6. Usuarios con Identity
 
 `ApplicationUser` hereda de `IdentityUser`; Identity proporciona hash de contraseña,
 cookies, bloqueo temporal y roles. La aplicación añade nombre visible, avatar, estado
@@ -94,7 +121,7 @@ y fecha de alta.
 
 - `[Authorize]` exige una sesión iniciada.
 - `[Authorize(Roles = RoleNames.Admin)]` restringe el panel de administración.
-- `User.FindFirstValue(ClaimTypes.NameIdentifier)` obtiene el ID de la cuenta actual.
+- `User.GetRequiredUserId()` obtiene el ID de la cuenta actual desde los *claims*.
 - `AccountController`, `ProfileController` y `UsersController` forman la base común
   de todos los grupos.
 
@@ -102,7 +129,7 @@ La API de Identity es asíncrona por diseño. Es la única excepción deliberada
 proyecto: registro, login, contraseña y roles usan `await`; las consultas y el CRUD
 del dominio utilizan métodos normales y `SaveChanges()`.
 
-## 6. Añadir una entidad nueva
+## 7. Añadir una entidad nueva
 
 Para `Product`, `Movie` o `Dish`:
 
@@ -119,7 +146,7 @@ Para `Product`, `Movie` o `Dish`:
 La primera entidad puede ser muy sencilla. Las asociaciones se añaden después, una a
 una, para que cada alumno entienda qué tabla y qué pantalla está cambiando.
 
-## 7. Orden recomendado de lectura
+## 8. Orden recomendado de lectura
 
 1. `Models/Book.cs`, `Models/Author.cs`, `Models/Category.cs`.
 2. `Data/ApplicationDbContext.cs`.

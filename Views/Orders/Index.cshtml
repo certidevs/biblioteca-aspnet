@@ -1,6 +1,6 @@
-@model List<Order>
+@model OrderIndexViewModel
 @{
-    var adminView = ViewData["IsAdminView"] is true;
+    var adminView = Model.IsAdminView;
     ViewData["Title"] = adminView ? "Pedidos" : "Mis pedidos";
 }
 
@@ -11,12 +11,12 @@
         <p class="page-subtitle mb-0">@(adminView ? "Consulta los pedidos realizados por todos los usuarios." : "Consulta el historial de tus compras.")</p>
     </div>
     <div class="d-flex align-items-center gap-2">
-        <span class="badge-soft">@Model.Count pedido(s)</span>
+        <span class="badge-soft">@Model.Orders.Count pedido(s)</span>
         <a class="btn btn-primary" asp-controller="Books" asp-action="Index">Explorar catálogo</a>
     </div>
 </header>
 
-@if (Model.Count == 0)
+@if (Model.Orders.Count == 0)
 {
     <div class="empty-state text-center">
         <div class="empty-icon mx-auto" aria-hidden="true"><i class="fa-solid fa-check"></i></div>
@@ -44,7 +44,7 @@ else
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var order in Model)
+                    @foreach (var order in Model.Orders)
                     {
                         <tr>
                             <td>

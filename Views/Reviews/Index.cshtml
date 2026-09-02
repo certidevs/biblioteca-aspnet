@@ -1,7 +1,6 @@
-@model List<Review>
+@model ReviewIndexViewModel
 @{
     ViewData["Title"] = "Reseñas";
-    var selectedRating = ViewData["Rating"] as int?;
 }
 
 <header class="page-header d-flex flex-wrap justify-content-between align-items-end gap-3">
@@ -10,25 +9,18 @@
         <h1 class="page-title">Reseñas</h1>
         <p class="page-subtitle mb-0">Opiniones de lectores sobre los libros del catálogo.</p>
     </div>
-    <span class="badge-soft">@Model.Count reseña(s)</span>
+    <span class="badge-soft">@Model.Reviews.Count reseña(s)</span>
 </header>
 
 <form class="search-panel p-3 p-lg-4 mb-4" method="get">
     <div class="row g-3 align-items-end">
         <div class="col-md-9">
             <label class="form-label" for="rating">Filtrar por puntuación</label>
-            <select class="form-select" id="rating" name="rating">
+            <select asp-for="Rating" class="form-select">
                 <option value="">Todas las puntuaciones</option>
                 @for (var value = 5; value >= 1; value--)
                 {
-                    if (selectedRating == value)
-                    {
-                        <option value="@value" selected>@value estrellas</option>
-                    }
-                    else
-                    {
-                        <option value="@value">@value estrellas</option>
-                    }
+                    <option value="@value">@value estrellas</option>
                 }
             </select>
         </div>
@@ -38,7 +30,7 @@
     </div>
 </form>
 
-@if (Model.Count == 0)
+@if (Model.Reviews.Count == 0)
 {
     <div class="empty-state text-center">
         <div class="empty-icon mx-auto" aria-hidden="true"><i class="fa-regular fa-star"></i></div>
@@ -49,7 +41,7 @@
 else
 {
     <div class="row g-4">
-        @foreach (var review in Model)
+        @foreach (var review in Model.Reviews)
         {
             <div class="col-md-6">
                 <article class="detail-panel h-100">

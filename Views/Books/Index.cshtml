@@ -1,5 +1,6 @@
 @model BookListViewModel
 @inject ImageStorage ImageStorage
+@using Microsoft.AspNetCore.Mvc.Rendering
 @{
     @* Los filtros se leen de la query string para que el resultado sea enlazable y refrescable. *@
     ViewData["Title"] = "Libros";
@@ -36,59 +37,23 @@
             </div>
         </div>
         <div class="col-md-4 col-lg-2">
-            <label class="form-label" for="authorId">Autor</label>
-            <select class="form-select" id="authorId" name="authorId">
+            <label class="form-label" asp-for="AuthorId">Autor</label>
+            <select class="form-select" asp-for="AuthorId" asp-items="@(new SelectList(Model.Authors, "Id", "Name"))">
                 <option value="">Todos</option>
-                @foreach (var author in Model.Authors)
-                {
-                    if (Model.AuthorId == author.Id)
-                    {
-                        <option value="@author.Id" selected>@author.Name</option>
-                    }
-                    else
-                    {
-                        <option value="@author.Id">@author.Name</option>
-                    }
-                }
             </select>
         </div>
         <div class="col-md-4 col-lg-2">
-            <label class="form-label" for="categoryId">Categoría</label>
-            <select class="form-select" id="categoryId" name="categoryId">
+            <label class="form-label" asp-for="CategoryId">Categoría</label>
+            <select class="form-select" asp-for="CategoryId" asp-items="@(new SelectList(Model.Categories, "Id", "Name"))">
                 <option value="">Todas</option>
-                @foreach (var category in Model.Categories)
-                {
-                    if (Model.CategoryId == category.Id)
-                    {
-                        <option value="@category.Id" selected>@category.Name</option>
-                    }
-                    else
-                    {
-                        <option value="@category.Id">@category.Name</option>
-                    }
-                }
             </select>
         </div>
         <div class="col-md-4 col-lg-2">
-            <label class="form-label" for="available">Disponibilidad</label>
-            <select class="form-select" id="available" name="available">
+            <label class="form-label" asp-for="Available">Disponibilidad</label>
+            <select class="form-select" asp-for="Available">
                 <option value="">Todos</option>
-                @if (Model.Available == true)
-                {
-                    <option value="true" selected>Disponibles</option>
-                }
-                else
-                {
-                    <option value="true">Disponibles</option>
-                }
-                @if (Model.Available == false)
-                {
-                    <option value="false" selected>No disponibles</option>
-                }
-                else
-                {
-                    <option value="false">No disponibles</option>
-                }
+                <option value="true">Disponibles</option>
+                <option value="false">No disponibles</option>
             </select>
         </div>
         <div class="col-lg-1 d-grid">

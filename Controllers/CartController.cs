@@ -1,5 +1,5 @@
-using System.Security.Claims;
 using BibliotecaAspNet.Services;
+using BibliotecaAspNet.Utilities;
 using BibliotecaAspNet.ViewModels.Cart;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,12 +11,12 @@ namespace BibliotecaAspNet.Controllers;
 public sealed class CartController : Controller
 {
     private readonly CartService cartService;
-    private readonly OrderService orders;
+    private readonly OrderService orderService;
 
-    public CartController(CartService cartService, OrderService orders)
+    public CartController(CartService cartService, OrderService orderService)
     {
         this.cartService = cartService;
-        this.orders = orders;
+        this.orderService = orderService;
     }
 
     [HttpGet]
@@ -27,9 +27,15 @@ public sealed class CartController : Controller
     public IActionResult Update(int id, int quantity)
     {
         var result = cartService.SetQuantity(id, quantity);
-        TempData[result.Succeeded ? "Message" : "Error"] = result.Succeeded
-            ? quantity <= 0 ? "Elemento quitado del carrito." : "Cantidad actualizada."
-            : result.Error;
+        if (!result.Succeeded)
+        {
+            TempData["Error"] = result.Error;
+            return RedirectToAction(nameof(Index));
+        }
+
+        TempData["Message"] = quantity <= 0
+            ? "Elemento quitado del carrito."
+            : "Cantidad actualizada.";
         return RedirectToAction(nameof(Index));
     }
 
@@ -79,13 +85,10 @@ public sealed class CartController : Controller
             return View(model);
         }
 
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId is null)
-        {
-            return Challenge();
-        }
-
-        var result = orders.Checkout(userId, cartService.GetQuantities(), model.Payment);
+        var result = orderService.Checkout(
+            User.GetRequiredUserId(),
+            cartService.GetQuantities(),
+            model.Payment);
         if (!result.Succeeded)
         {
             ModelState.AddModelError("Payment.CardNumber", result.Error!);

@@ -1,6 +1,6 @@
-using System.Security.Claims;
 using BibliotecaAspNet.Models;
 using BibliotecaAspNet.Services;
+using BibliotecaAspNet.Utilities;
 using BibliotecaAspNet.ViewModels.Reviews;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,30 +10,36 @@ namespace BibliotecaAspNet.Controllers;
 /// <summary>Listado público y escritura moderada de reseñas.</summary>
 public sealed class ReviewsController : Controller
 {
-    private readonly ReviewService reviews;
-    private readonly BookService books;
+    private readonly ReviewService reviewService;
+    private readonly BookService bookService;
 
-    public ReviewsController(ReviewService reviews, BookService books)
+    public ReviewsController(ReviewService reviewService, BookService bookService)
     {
-        this.reviews = reviews;
-        this.books = books;
+        this.reviewService = reviewService;
+        this.bookService = bookService;
     }
 
     [HttpGet]
     public IActionResult Index(int? rating)
     {
-        ViewData["Rating"] = rating;
-        return View(reviews.Search(rating));
+        return View(new ReviewIndexViewModel
+        {
+            Rating = rating,
+            Reviews = reviewService.Search(rating)
+        });
     }
 
     [Authorize]
     [HttpGet]
     public IActionResult Create(int bookId)
     {
-        var book = books.GetDetails(bookId);
-        return book is null
-            ? NotFound()
-            : View(new ReviewFormViewModel { BookId = book.Id, BookTitle = book.Title });
+        var book = bookService.GetDetails(bookId);
+        if (book is null)
+        {
+            return NotFound();
+        }
+
+        return View(new ReviewFormViewModel { BookId = book.Id, BookTitle = book.Title });
     }
 
     [Authorize]
@@ -41,7 +47,7 @@ public sealed class ReviewsController : Controller
     /// <summary>POST: toma UserId de la cookie, no del formulario.</summary>
     public IActionResult Create(ReviewFormViewModel model)
     {
-        var book = books.GetDetails(model.BookId);
+        var book = bookService.GetDetails(model.BookId);
         if (book is null)
         {
             return NotFound();
@@ -53,15 +59,11 @@ public sealed class ReviewsController : Controller
             return View(model);
         }
 
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId is null)
-        {
-            return Challenge();
-        }
-
         try
         {
-            reviews.Create(new Review { BookId = model.BookId, Comment = model.Comment, Rating = model.Rating }, userId);
+            reviewService.Create(
+                new Review { BookId = model.BookId, Comment = model.Comment, Rating = model.Rating },
+                User.GetRequiredUserId());
         }
         catch (InvalidOperationException exception)
         {
@@ -77,14 +79,13 @@ public sealed class ReviewsController : Controller
     [HttpGet]
     public IActionResult Edit(int id)
     {
-        var review = reviews.GetById(id);
+        var review = reviewService.GetById(id);
         if (review is null)
         {
             return NotFound();
         }
 
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId is null || !reviews.CanModify(review, userId, User.IsInRole(RoleNames.Admin)))
+        if (!reviewService.CanModify(review, User.GetRequiredUserId(), User.IsInRole(RoleNames.Admin)))
         {
             return Forbid();
         }
@@ -108,7 +109,7 @@ public sealed class ReviewsController : Controller
             return BadRequest();
         }
 
-        var book = books.GetDetails(model.BookId);
+        var book = bookService.GetDetails(model.BookId);
         if (book is null)
         {
             return NotFound();
@@ -120,16 +121,10 @@ public sealed class ReviewsController : Controller
             return View(model);
         }
 
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId is null)
-        {
-            return Challenge();
-        }
-
-        var updated = reviews.Update(
+        var updated = reviewService.Update(
             id,
             new Review { Comment = model.Comment, Rating = model.Rating },
-            userId,
+            User.GetRequiredUserId(),
             User.IsInRole(RoleNames.Admin));
         if (!updated)
         {
@@ -144,21 +139,18 @@ public sealed class ReviewsController : Controller
     [HttpPost]
     public IActionResult Delete(int id)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId is null)
-        {
-            return Challenge();
-        }
-
-        var bookId = reviews.GetById(id)?.BookId;
-        if (!reviews.Delete(id, userId, User.IsInRole(RoleNames.Admin)))
+        var bookId = reviewService.GetById(id)?.BookId;
+        if (!reviewService.Delete(id, User.GetRequiredUserId(), User.IsInRole(RoleNames.Admin)))
         {
             return Forbid();
         }
 
         TempData["Message"] = "Reseña eliminada correctamente.";
-        return bookId.HasValue
-            ? RedirectToAction("Details", "Books", new { id = bookId.Value })
-            : RedirectToAction(nameof(Index));
+        if (bookId.HasValue)
+        {
+            return RedirectToAction("Details", "Books", new { id = bookId.Value });
+        }
+
+        return RedirectToAction(nameof(Index));
     }
 }

@@ -23,14 +23,14 @@
                 <h1 class="h2 mt-3">Iniciar sesión</h1>
                 <p class="text-secondary mb-4">Accede a tus favoritos, compras y reseñas.</p>
 
-                @if (ViewData["LoggedOut"] is true)
+                @if (Model.ShowLoggedOutMessage)
                 {
                     <div class="alert alert-success">Has cerrado sesión correctamente.</div>
                 }
                 <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
                 <form asp-action="Login" method="post">
-                    <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+                    <input asp-for="ReturnUrl" type="hidden" />
                     <div class="mb-3">
                         <label asp-for="Username" class="form-label"></label>
                         <input asp-for="Username" class="form-control" autocomplete="username" autofocus placeholder="usuario o email" />

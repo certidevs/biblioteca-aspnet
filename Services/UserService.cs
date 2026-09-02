@@ -128,6 +128,7 @@ public sealed class UserService
         }
 
         var oldAvatarFileName = user.AvatarFileName;
+        var avatarFileName = model.RemoveAvatar ? null : oldAvatarFileName;
         string? newAvatarFileName = null;
         if (model.Avatar is not null)
         {
@@ -138,12 +139,12 @@ public sealed class UserService
             }
 
             newAvatarFileName = upload.Image!.FileName;
+            avatarFileName = newAvatarFileName;
         }
 
         user.DisplayName = displayName;
         user.Email = email;
-        user.AvatarFileName = newAvatarFileName
-            ?? (model.RemoveAvatar ? null : oldAvatarFileName);
+        user.AvatarFileName = avatarFileName;
 
         // Primero se actualiza Identity; solo después se elimina el avatar antiguo.
         var updateResult = await userManager.UpdateAsync(user);

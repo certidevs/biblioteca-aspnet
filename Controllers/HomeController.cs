@@ -9,26 +9,29 @@ namespace BibliotecaAspNet.Controllers;
 /// <summary>Página inicial con estadísticas y una pequeña selección del catálogo.</summary>
 public sealed class HomeController : Controller
 {
-    private readonly BookService books;
-    private readonly AuthorService authors;
-    private readonly CategoryService categories;
+    private readonly BookService bookService;
+    private readonly AuthorService authorService;
+    private readonly CategoryService categoryService;
 
-    public HomeController(BookService books, AuthorService authors, CategoryService categories)
+    public HomeController(
+        BookService bookService,
+        AuthorService authorService,
+        CategoryService categoryService)
     {
-        this.books = books;
-        this.authors = authors;
-        this.categories = categories;
+        this.bookService = bookService;
+        this.authorService = authorService;
+        this.categoryService = categoryService;
     }
 
     [HttpGet]
     public IActionResult Index()
     {
-        var featuredBooks = books.Search(null, null, null, true, false, null).Take(3).ToList();
+        var featuredBooks = bookService.Search(available: true).Take(3).ToList();
         return View(new DashboardViewModel
         {
-            BookCount = books.Count(),
-            AuthorCount = authors.Count(),
-            CategoryCount = categories.Count(),
+            BookCount = bookService.Count(),
+            AuthorCount = authorService.Count(),
+            CategoryCount = categoryService.Count(),
             FeaturedBooks = featuredBooks
         });
     }

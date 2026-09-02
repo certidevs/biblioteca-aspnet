@@ -1,6 +1,6 @@
-using System.Security.Claims;
 using BibliotecaAspNet.Models;
 using BibliotecaAspNet.Services;
+using BibliotecaAspNet.Utilities;
 using BibliotecaAspNet.ViewModels.Profile;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -12,16 +12,16 @@ namespace BibliotecaAspNet.Controllers;
 /// <summary>Consulta y edición del perfil del usuario autenticado.</summary>
 public sealed class ProfileController : Controller
 {
-    private readonly UserService users;
+    private readonly UserService userService;
     private readonly UserManager<ApplicationUser> userManager;
     private readonly SignInManager<ApplicationUser> signInManager;
 
     public ProfileController(
-        UserService users,
+        UserService userService,
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager)
     {
-        this.users = users;
+        this.userService = userService;
         this.userManager = userManager;
         this.signInManager = signInManager;
     }
@@ -29,38 +29,32 @@ public sealed class ProfileController : Controller
     [HttpGet]
     public IActionResult Index()
     {
-        var userId = GetUserId();
-        if (userId is null)
+        var model = userService.GetProfile(User.GetRequiredUserId());
+        if (model is null)
         {
-            return Challenge();
+            return NotFound();
         }
 
-        var model = users.GetProfile(userId);
-        return model is null ? NotFound() : View(model);
+        return View(model);
     }
 
     [HttpGet]
     public IActionResult Edit()
     {
-        var userId = GetUserId();
-        if (userId is null)
+        var model = userService.GetProfileEditModel(User.GetRequiredUserId());
+        if (model is null)
         {
-            return Challenge();
+            return NotFound();
         }
 
-        var model = users.GetProfileEditModel(userId);
-        return model is null ? NotFound() : View(model);
+        return View(model);
     }
 
     [HttpPost]
     /// <summary>Identity requiere operaciones asíncronas para cambiar la cuenta y refrescar la cookie.</summary>
     public async Task<IActionResult> Edit(ProfileEditViewModel model)
     {
-        var userId = GetUserId();
-        if (userId is null)
-        {
-            return Challenge();
-        }
+        var userId = User.GetRequiredUserId();
 
         if (!ModelState.IsValid)
         {
@@ -68,7 +62,7 @@ public sealed class ProfileController : Controller
             return View(model);
         }
 
-        var result = await users.UpdateProfileAsync(userId, model);
+        var result = await userService.UpdateProfileAsync(userId, model);
         if (!result.Succeeded)
         {
             AddIdentityErrors(result);
@@ -92,13 +86,8 @@ public sealed class ProfileController : Controller
             return View(model);
         }
 
-        var userId = GetUserId();
-        if (userId is null)
-        {
-            return Challenge();
-        }
-
-        var result = await users.ChangePasswordAsync(userId, model);
+        var userId = User.GetRequiredUserId();
+        var result = await userService.ChangePasswordAsync(userId, model);
         if (!result.Succeeded)
         {
             AddIdentityErrors(result);
@@ -110,11 +99,9 @@ public sealed class ProfileController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    private string? GetUserId() => User.FindFirstValue(ClaimTypes.NameIdentifier);
-
     private void RestoreCurrentAvatar(ProfileEditViewModel model, string userId)
     {
-        model.CurrentAvatarFileName = users.GetProfileEditModel(userId)?.CurrentAvatarFileName;
+        model.CurrentAvatarFileName = userService.GetProfileEditModel(userId)?.CurrentAvatarFileName;
     }
 
     /// <summary>Actualiza la cookie cuando cambia información que muestra el layout.</summary>

@@ -22,12 +22,12 @@ public sealed class BookService
 
     /// <summary>Busca libros y aplica únicamente los filtros elegidos en la página.</summary>
     public List<Book> Search(
-        string? search,
-        int? authorId,
-        int? categoryId,
-        bool? available,
-        bool favoritesOnly,
-        string? userId)
+        string? search = null,
+        int? authorId = null,
+        int? categoryId = null,
+        bool? available = null,
+        bool favoritesOnly = false,
+        string? userId = null)
     {
         var query = context.Books
             .AsNoTracking()
@@ -140,6 +140,7 @@ public sealed class BookService
         }
 
         var oldCoverFileName = existing.CoverImageFileName;
+        var coverFileName = removeCoverImage ? null : oldCoverFileName;
         string? newCoverFileName = null;
         if (coverImage is not null)
         {
@@ -150,6 +151,7 @@ public sealed class BookService
             }
 
             newCoverFileName = upload.Image!.FileName;
+            coverFileName = newCoverFileName;
         }
 
         existing.Title = book.Title;
@@ -162,7 +164,7 @@ public sealed class BookService
         existing.Synopsis = book.Synopsis;
         existing.AuthorId = author.Id;
         existing.Author = author;
-        existing.CoverImageFileName = newCoverFileName ?? (removeCoverImage ? null : oldCoverFileName);
+        existing.CoverImageFileName = coverFileName;
 
         // Para actualizar N:M se reemplaza la colección por las categorías seleccionadas.
         existing.Categories.Clear();

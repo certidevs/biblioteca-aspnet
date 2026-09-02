@@ -24,19 +24,17 @@ public sealed class AccountController : Controller
     [HttpGet]
     [AllowAnonymous]
     /// <summary>Muestra el formulario de inicio de sesión.</summary>
-    public IActionResult Login(string? returnUrl = null)
+    public IActionResult Login(string? returnUrl, bool loggedOut = false) => View(new LoginViewModel
     {
-        ViewData["ReturnUrl"] = returnUrl;
-        ViewData["LoggedOut"] = Request.Query.ContainsKey("loggedOut");
-        return View(new LoginViewModel());
-    }
+        ReturnUrl = returnUrl,
+        ShowLoggedOutMessage = loggedOut
+    });
 
     [HttpPost]
     [AllowAnonymous]
     /// <summary>Identity necesita esta operación asíncrona para validar contraseña y crear la cookie.</summary>
-    public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
+    public async Task<IActionResult> Login(LoginViewModel model)
     {
-        ViewData["ReturnUrl"] = returnUrl;
         if (!ModelState.IsValid)
         {
             return View(model);
@@ -59,7 +57,7 @@ public sealed class AccountController : Controller
 
         if (result.Succeeded)
         {
-            return RedirectToLocal(returnUrl);
+            return RedirectToLocal(model.ReturnUrl);
         }
 
         if (result.IsLockedOut)

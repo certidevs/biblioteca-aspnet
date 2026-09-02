@@ -1,8 +1,7 @@
-@model List<UserListItemViewModel>
+@model UserIndexViewModel
 @inject ImageStorage ImageStorage
 @{
     ViewData["Title"] = "Usuarios";
-    var search = ViewData["Search"] as string;
 }
 
 <header class="page-header d-flex flex-wrap justify-content-between align-items-end gap-3">
@@ -12,7 +11,7 @@
         <p class="page-subtitle mb-0">Gestiona cuentas, roles, contraseñas, avatares y estado de activación.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
-        <span class="badge-soft">@Model.Count cuenta(s)</span>
+        <span class="badge-soft">@Model.Users.Count cuenta(s)</span>
         <a class="btn btn-primary" asp-action="Create"><i class="fa-solid fa-plus me-1" aria-hidden="true"></i>Nuevo usuario</a>
     </div>
 </header>
@@ -23,7 +22,7 @@
             <label class="form-label" for="search">Buscar una cuenta</label>
             <div class="input-group">
                 <span class="input-group-text" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>
-                <input class="form-control" id="search" name="search" value="@search" placeholder="Usuario, email o nombre" />
+                <input asp-for="Search" class="form-control" placeholder="Usuario, email o nombre" />
             </div>
         </div>
         <div class="col-md-3 d-grid">
@@ -32,7 +31,7 @@
     </div>
 </form>
 
-@if (Model.Count == 0)
+@if (Model.Users.Count == 0)
 {
     <div class="empty-state text-center">
         <div class="empty-icon mx-auto" aria-hidden="true">&#64;</div>
@@ -55,7 +54,7 @@ else
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var item in Model)
+                    @foreach (var item in Model.Users)
                     {
                         var name = item.User.DisplayName ?? item.User.UserName ?? "Usuario";
                         var initial = string.IsNullOrWhiteSpace(name) ? "U" : name[..1].ToUpperInvariant();

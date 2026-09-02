@@ -1,7 +1,6 @@
-@model List<Category>
+@model CategoryIndexViewModel
 @{
     ViewData["Title"] = "Categorías";
-    var search = ViewData["Search"] as string;
 }
 
 <header class="page-header d-flex flex-wrap justify-content-between align-items-end gap-3">
@@ -11,7 +10,7 @@
         <p class="page-subtitle mb-0">Organiza y descubre libros mediante etiquetas y temas.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
-        <span class="badge-soft">@Model.Count categoría(s)</span>
+        <span class="badge-soft">@Model.Categories.Count categoría(s)</span>
         @if (User.IsInRole(RoleNames.Admin))
         {
             <a class="btn btn-primary" asp-action="Create"><i class="fa-solid fa-plus me-1" aria-hidden="true"></i>Nueva categoría</a>
@@ -25,7 +24,7 @@
             <label class="form-label" for="search">Buscar una categoría</label>
             <div class="input-group">
                 <span class="input-group-text" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>
-                <input class="form-control" id="search" name="search" value="@search" placeholder="Nombre o descripción" />
+                <input asp-for="Search" class="form-control" placeholder="Nombre o descripción" />
             </div>
         </div>
         <div class="col-md-3 d-grid">
@@ -34,7 +33,7 @@
     </div>
 </form>
 
-@if (Model.Count == 0)
+@if (Model.Categories.Count == 0)
 {
     <div class="empty-state text-center">
         <div class="empty-icon mx-auto" aria-hidden="true">#</div>
@@ -46,7 +45,7 @@
 else
 {
     <div class="row g-4">
-        @foreach (var category in Model)
+        @foreach (var category in Model.Categories)
         {
             var color = ColorContrast.NormalizeHex(category.Color);
             <div class="col-md-6 col-xl-3">

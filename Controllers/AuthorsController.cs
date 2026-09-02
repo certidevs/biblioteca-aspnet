@@ -9,27 +9,35 @@ namespace BibliotecaAspNet.Controllers;
 /// <summary>CRUD MVC de autores. El controlador traduce HTTP a una vista o redirección.</summary>
 public sealed class AuthorsController : Controller
 {
-    private readonly AuthorService authors;
+    private readonly AuthorService authorService;
 
-    public AuthorsController(AuthorService authors)
+    public AuthorsController(AuthorService authorService)
     {
-        this.authors = authors;
+        this.authorService = authorService;
     }
 
     [HttpGet]
     /// <summary>GET: muestra autores y aplica el texto de búsqueda.</summary>
     public IActionResult Index(string? search)
     {
-        ViewData["Search"] = search;
-        return View(authors.Search(search));
+        return View(new AuthorIndexViewModel
+        {
+            Search = search,
+            Authors = authorService.Search(search)
+        });
     }
 
     [HttpGet]
     /// <summary>GET: muestra un autor con sus libros.</summary>
     public IActionResult Details(int id)
     {
-        var author = authors.GetDetails(id);
-        return author is null ? NotFound() : View(author);
+        var author = authorService.GetDetails(id);
+        if (author is null)
+        {
+            return NotFound();
+        }
+
+        return View(author);
     }
 
     [Authorize(Roles = RoleNames.Admin)]
@@ -48,7 +56,7 @@ public sealed class AuthorsController : Controller
 
         try
         {
-            authors.Create(ToEntity(model), model.Photo);
+            authorService.Create(ToEntity(model), model.Photo);
         }
         catch (InvalidOperationException exception)
         {
@@ -64,8 +72,13 @@ public sealed class AuthorsController : Controller
     [HttpGet]
     public IActionResult Edit(int id)
     {
-        var author = authors.GetDetails(id);
-        return author is null ? NotFound() : View(ToViewModel(author));
+        var author = authorService.GetDetails(id);
+        if (author is null)
+        {
+            return NotFound();
+        }
+
+        return View(ToViewModel(author));
     }
 
     [Authorize(Roles = RoleNames.Admin)]
@@ -86,7 +99,7 @@ public sealed class AuthorsController : Controller
 
         try
         {
-            if (!authors.Update(id, ToEntity(model), model.Photo, model.RemovePhoto))
+            if (!authorService.Update(id, ToEntity(model), model.Photo, model.RemovePhoto))
             {
                 return NotFound();
             }
@@ -106,15 +119,20 @@ public sealed class AuthorsController : Controller
     [HttpGet]
     public IActionResult Delete(int id)
     {
-        var author = authors.GetDetails(id);
-        return author is null ? NotFound() : View(author);
+        var author = authorService.GetDetails(id);
+        if (author is null)
+        {
+            return NotFound();
+        }
+
+        return View(author);
     }
 
     [Authorize(Roles = RoleNames.Admin)]
     [HttpPost, ActionName("Delete")]
     public IActionResult DeleteConfirmed(int id)
     {
-        if (!authors.Delete(id))
+        if (!authorService.Delete(id))
         {
             return NotFound();
         }
@@ -145,6 +163,6 @@ public sealed class AuthorsController : Controller
 
     private void RestoreCurrentPhoto(AuthorFormViewModel model, int id)
     {
-        model.CurrentPhotoFileName = authors.GetDetails(id)?.PhotoFileName;
+        model.CurrentPhotoFileName = authorService.GetDetails(id)?.PhotoFileName;
     }
 }

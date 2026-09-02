@@ -9,25 +9,33 @@ namespace BibliotecaAspNet.Controllers;
 /// <summary>CRUD MVC de categorías.</summary>
 public sealed class CategoriesController : Controller
 {
-    private readonly CategoryService categories;
+    private readonly CategoryService categoryService;
 
-    public CategoriesController(CategoryService categories)
+    public CategoriesController(CategoryService categoryService)
     {
-        this.categories = categories;
+        this.categoryService = categoryService;
     }
 
     [HttpGet]
     public IActionResult Index(string? search)
     {
-        ViewData["Search"] = search;
-        return View(categories.Search(search));
+        return View(new CategoryIndexViewModel
+        {
+            Search = search,
+            Categories = categoryService.Search(search)
+        });
     }
 
     [HttpGet]
     public IActionResult Details(int id)
     {
-        var category = categories.GetDetails(id);
-        return category is null ? NotFound() : View(category);
+        var category = categoryService.GetDetails(id);
+        if (category is null)
+        {
+            return NotFound();
+        }
+
+        return View(category);
     }
 
     [Authorize(Roles = RoleNames.Admin)]
@@ -45,7 +53,7 @@ public sealed class CategoriesController : Controller
 
         try
         {
-            categories.Create(ToEntity(model));
+            categoryService.Create(ToEntity(model));
         }
         catch (InvalidOperationException exception)
         {
@@ -61,8 +69,13 @@ public sealed class CategoriesController : Controller
     [HttpGet]
     public IActionResult Edit(int id)
     {
-        var category = categories.GetDetails(id);
-        return category is null ? NotFound() : View(ToViewModel(category));
+        var category = categoryService.GetDetails(id);
+        if (category is null)
+        {
+            return NotFound();
+        }
+
+        return View(ToViewModel(category));
     }
 
     [Authorize(Roles = RoleNames.Admin)]
@@ -81,7 +94,7 @@ public sealed class CategoriesController : Controller
 
         try
         {
-            if (!categories.Update(id, ToEntity(model)))
+            if (!categoryService.Update(id, ToEntity(model)))
             {
                 return NotFound();
             }
@@ -100,15 +113,20 @@ public sealed class CategoriesController : Controller
     [HttpGet]
     public IActionResult Delete(int id)
     {
-        var category = categories.GetDetails(id);
-        return category is null ? NotFound() : View(category);
+        var category = categoryService.GetDetails(id);
+        if (category is null)
+        {
+            return NotFound();
+        }
+
+        return View(category);
     }
 
     [Authorize(Roles = RoleNames.Admin)]
     [HttpPost, ActionName("Delete")]
     public IActionResult DeleteConfirmed(int id)
     {
-        if (!categories.Delete(id))
+        if (!categoryService.Delete(id))
         {
             return NotFound();
         }

@@ -1,6 +1,6 @@
-using System.Security.Claims;
 using BibliotecaAspNet.Models;
 using BibliotecaAspNet.Services;
+using BibliotecaAspNet.Utilities;
 using BibliotecaAspNet.ViewModels.Books;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,28 +10,33 @@ namespace BibliotecaAspNet.Controllers;
 /// <summary>Catálogo público y CRUD administrativo de libros.</summary>
 public sealed class BooksController : Controller
 {
-    private readonly BookService books;
-    private readonly AuthorService authors;
-    private readonly CategoryService categories;
-    private readonly CartService cart;
+    private readonly BookService bookService;
+    private readonly AuthorService authorService;
+    private readonly CategoryService categoryService;
+    private readonly CartService cartService;
 
     public BooksController(
-        BookService books,
-        AuthorService authors,
-        CategoryService categories,
-        CartService cart)
+        BookService bookService,
+        AuthorService authorService,
+        CategoryService categoryService,
+        CartService cartService)
     {
-        this.books = books;
-        this.authors = authors;
-        this.categories = categories;
-        this.cart = cart;
+        this.bookService = bookService;
+        this.authorService = authorService;
+        this.categoryService = categoryService;
+        this.cartService = cartService;
     }
 
     [HttpGet]
     /// <summary>GET: lista libros con filtros y rellena sus selectores.</summary>
     public IActionResult Index(string? search, int? authorId, int? categoryId, bool? available, bool favoritesOnly)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        string? userId = null;
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            userId = User.GetRequiredUserId();
+        }
+
         return View(new BookListViewModel
         {
             Search = search,
@@ -40,17 +45,28 @@ public sealed class BooksController : Controller
             Available = available,
             FavoritesOnly = favoritesOnly,
             CurrentUserId = userId,
-            Books = books.Search(search, authorId, categoryId, available, favoritesOnly, userId),
-            Authors = authors.Search(null),
-            Categories = categories.Search(null)
+            Books = bookService.Search(
+                search: search,
+                authorId: authorId,
+                categoryId: categoryId,
+                available: available,
+                favoritesOnly: favoritesOnly,
+                userId: userId),
+            Authors = authorService.Search(null),
+            Categories = categoryService.Search(null)
         });
     }
 
     [HttpGet]
     public IActionResult Details(int id)
     {
-        var book = books.GetDetails(id);
-        return book is null ? NotFound() : View(book);
+        var book = bookService.GetDetails(id);
+        if (book is null)
+        {
+            return NotFound();
+        }
+
+        return View(book);
     }
 
     [Authorize(Roles = RoleNames.Admin)]
@@ -75,7 +91,7 @@ public sealed class BooksController : Controller
 
         try
         {
-            books.Create(model.ToBook(), model.SelectedCategoryIds, model.CoverImage);
+            bookService.Create(model.ToBook(), model.SelectedCategoryIds, model.CoverImage);
         }
         catch (InvalidOperationException exception)
         {
@@ -92,7 +108,7 @@ public sealed class BooksController : Controller
     [HttpGet]
     public IActionResult Edit(int id)
     {
-        var book = books.GetForEdit(id);
+        var book = bookService.GetForEdit(id);
         if (book is null)
         {
             return NotFound();
@@ -120,7 +136,7 @@ public sealed class BooksController : Controller
 
         try
         {
-            if (!books.Update(id, model.ToBook(), model.SelectedCategoryIds, model.CoverImage, model.RemoveCoverImage))
+            if (!bookService.Update(id, model.ToBook(), model.SelectedCategoryIds, model.CoverImage, model.RemoveCoverImage))
             {
                 return NotFound();
             }
@@ -140,15 +156,20 @@ public sealed class BooksController : Controller
     [HttpGet]
     public IActionResult Delete(int id)
     {
-        var book = books.GetDetails(id);
-        return book is null ? NotFound() : View(book);
+        var book = bookService.GetDetails(id);
+        if (book is null)
+        {
+            return NotFound();
+        }
+
+        return View(book);
     }
 
     [Authorize(Roles = RoleNames.Admin)]
     [HttpPost, ActionName("Delete")]
     public IActionResult DeleteConfirmed(int id)
     {
-        if (!books.Delete(id))
+        if (!bookService.Delete(id))
         {
             return NotFound();
         }
@@ -162,13 +183,8 @@ public sealed class BooksController : Controller
     /// <summary>POST: alterna una relación N:M entre la cuenta actual y el libro.</summary>
     public IActionResult ToggleFavorite(int id, string? returnUrl)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId is null)
-        {
-            return Challenge();
-        }
-
-        TempData["Message"] = books.ToggleFavorite(id, userId)
+        var addedToFavorites = bookService.ToggleFavorite(id, User.GetRequiredUserId());
+        TempData["Message"] = addedToFavorites
             ? "Libro añadido a favoritos."
             : "Libro quitado de favoritos.";
         return RedirectToLocal(returnUrl, id);
@@ -178,22 +194,34 @@ public sealed class BooksController : Controller
     [HttpPost]
     public IActionResult AddToCart(int id, int quantity = 1, string? returnUrl = null)
     {
-        var result = cart.Add(id, quantity);
-        TempData[result.Succeeded ? "Message" : "Error"] = result.Succeeded
-            ? quantity > 1 ? $"Se han añadido {quantity} unidades al carrito." : "Libro añadido al carrito."
-            : result.Error;
+        var result = cartService.Add(id, quantity);
+        if (!result.Succeeded)
+        {
+            TempData["Error"] = result.Error;
+            return RedirectToLocal(returnUrl, id);
+        }
+
+        TempData["Message"] = quantity == 1
+            ? "Libro añadido al carrito."
+            : $"Se han añadido {quantity} unidades al carrito.";
         return RedirectToLocal(returnUrl, id);
     }
 
     /// <summary>Evita repetir las consultas para los selectores de Create y Edit.</summary>
     private void FillCatalogOptions(BookFormViewModel model)
     {
-        model.Authors = authors.Search(null);
-        model.Categories = categories.Search(null);
+        model.Authors = authorService.Search(null);
+        model.Categories = categoryService.Search(null);
     }
 
     /// <summary>Evita que un parámetro returnUrl redirija a una web externa.</summary>
-    private IActionResult RedirectToLocal(string? returnUrl, int bookId) => Url.IsLocalUrl(returnUrl)
-        ? Redirect(returnUrl!)
-        : RedirectToAction(nameof(Details), new { id = bookId })!;
+    private IActionResult RedirectToLocal(string? returnUrl, int bookId)
+    {
+        if (Url.IsLocalUrl(returnUrl))
+        {
+            return Redirect(returnUrl!);
+        }
+
+        return RedirectToAction(nameof(Details), new { id = bookId })!;
+    }
 }

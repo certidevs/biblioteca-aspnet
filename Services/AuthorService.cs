@@ -82,6 +82,7 @@ public sealed class AuthorService
         }
 
         var oldPhotoFileName = existing.PhotoFileName;
+        var photoFileName = removePhoto ? null : oldPhotoFileName;
         string? newPhotoFileName = null;
         if (photo is not null)
         {
@@ -92,13 +93,14 @@ public sealed class AuthorService
             }
 
             newPhotoFileName = upload.Image!.FileName;
+            photoFileName = newPhotoFileName;
         }
 
         existing.Name = author.Name;
         existing.Bio = author.Bio;
         existing.BirthDate = author.BirthDate;
         existing.Nationality = author.Nationality;
-        existing.PhotoFileName = newPhotoFileName ?? (removePhoto ? null : oldPhotoFileName);
+        existing.PhotoFileName = photoFileName;
 
         try
         {

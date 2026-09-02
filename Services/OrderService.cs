@@ -87,7 +87,7 @@ public sealed class OrderService
         .ToList();
 
     /// <summary>Devuelve un pedido solo al propietario o a un administrador.</summary>
-    public Order? GetDetails(int id, string? userId, bool includeAllUsers)
+    public Order? GetDetails(int id, string userId, bool includeAllUsers)
     {
         var query = QueryWithDetails();
         if (!includeAllUsers)

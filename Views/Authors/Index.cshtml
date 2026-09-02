@@ -1,8 +1,7 @@
-@model List<Author>
+@model AuthorIndexViewModel
 @inject ImageStorage ImageStorage
 @{
     ViewData["Title"] = "Autores";
-    var search = ViewData["Search"] as string;
 }
 
 <header class="page-header d-flex flex-wrap justify-content-between align-items-end gap-3">
@@ -12,7 +11,7 @@
         <p class="page-subtitle mb-0">Conoce a quienes están detrás de las historias y descubre sus obras.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
-        <span class="badge-soft">@Model.Count autor(es)</span>
+        <span class="badge-soft">@Model.Authors.Count autor(es)</span>
         @if (User.IsInRole(RoleNames.Admin))
         {
             <a class="btn btn-primary" asp-action="Create"><i class="fa-solid fa-plus me-1" aria-hidden="true"></i>Nuevo autor</a>
@@ -26,7 +25,7 @@
             <label class="form-label" for="search">Buscar un autor</label>
             <div class="input-group">
                 <span class="input-group-text" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>
-                <input class="form-control" id="search" name="search" value="@search" placeholder="Nombre o nacionalidad" />
+                <input asp-for="Search" class="form-control" placeholder="Nombre o nacionalidad" />
             </div>
         </div>
         <div class="col-md-3 d-grid">
@@ -35,7 +34,7 @@
     </div>
 </form>
 
-@if (Model.Count == 0)
+@if (Model.Authors.Count == 0)
 {
     <div class="empty-state text-center">
         <div class="empty-icon mx-auto" aria-hidden="true">Aa</div>
@@ -46,7 +45,7 @@
 else
 {
     <div class="row g-4">
-        @foreach (var author in Model)
+        @foreach (var author in Model.Authors)
         {
             <div class="col-md-6 col-xl-4">
                 <article class="detail-panel author-card h-100 d-flex flex-column">

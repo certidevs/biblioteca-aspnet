@@ -85,13 +85,19 @@ Services/       # Ayudas concretas que aportan una regla real
 ViewModels/     # DTOs de formularios y de cada pantalla
 Views/          # Razor, Bootstrap y layout común
 wwwroot/        # CSS, JS, Bootstrap, Font Awesome e imágenes
-Utilities/      # Funciones puras como ISBN o precios
+Utilities/      # Ayudas pequeñas y sin estado: claims y contraste de color
 docs/           # Guías de código, base de grupos y despliegue
 ```
 
 Un `ViewModel` es el equivalente más cercano a un DTO de Spring Boot. Por ejemplo,
 `BookFormViewModel` contiene `IFormFile` e IDs de categorías que existen solo en el
 formulario; `Book` conserva las relaciones reales que se persisten.
+
+Para que las acciones se lean de forma directa, cada página recibe un ViewModel tipado
+y los controladores reservan `ViewData["Title"]` para el título del layout. Una acción
+devuelve `IActionResult`, que puede ser `View(model)`, `RedirectToAction(...)`,
+`NotFound()` o `Forbid()` según el resultado de la petición. La guía explica el flujo
+con ejemplos breves.
 
 ## Base común de los grupos
 
