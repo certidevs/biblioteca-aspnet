@@ -146,7 +146,22 @@ Para `Product`, `Movie` o `Dish`:
 La primera entidad puede ser muy sencilla. Las asociaciones se añaden después, una a
 una, para que cada alumno entienda qué tabla y qué pantalla está cambiando.
 
-## 8. Orden recomendado de lectura
+## 8. Test unitario y CI
+
+`tests/BibliotecaAspNet.Tests` es un proyecto xUnit separado. Su primer test cubre
+`ColorContrast`, una regla pura que no necesita arrancar MVC, Identity ni SQLite. Es
+el tipo de test unitario más fácil de entender: entrada, llamada y resultado esperado.
+
+```bash
+dotnet test BibliotecaAspNet.slnx
+```
+
+`.github/workflows/build-and-test.yml` ejecuta exactamente la misma comprobación en
+GitHub Actions para cada *push* a `main` y cada *pull request*. El CI no sustituye una
+revisión visual de la aplicación, pero evita aceptar cambios que no restauran,
+compilan o superan sus tests.
+
+## 9. Orden recomendado de lectura
 
 1. `Models/Book.cs`, `Models/Author.cs`, `Models/Category.cs`.
 2. `Data/ApplicationDbContext.cs`.

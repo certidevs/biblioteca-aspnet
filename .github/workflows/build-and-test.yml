@@ -1,0 +1,38 @@
+name: Build and test .NET
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# El workflow solo necesita leer el repositorio; no publica ni modifica nada.
+permissions:
+  contents: read
+
+env:
+  DOTNET_VERSION: 10.0.x
+
+jobs:
+  build-and-test:
+    name: Build and test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install .NET ${{ env.DOTNET_VERSION }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore BibliotecaAspNet.slnx
+
+      - name: Build in Release
+        run: dotnet build BibliotecaAspNet.slnx --configuration Release --no-restore
+
+      - name: Run unit tests
+        run: dotnet test BibliotecaAspNet.slnx --configuration Release --no-build --verbosity normal

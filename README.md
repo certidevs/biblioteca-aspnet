@@ -33,7 +33,7 @@ datos demo al primer arranque.
 Desde esta carpeta:
 
 ```bash
-dotnet run
+dotnet run --project BibliotecaAspNet.csproj
 ```
 
 Abrir la URL que muestra la consola (normalmente `http://localhost:5085`).
@@ -44,6 +44,22 @@ Usuarios de demo:
 - `user` / `User123!`
 
 Tarjeta de checkout ficticia: `4242 4242 4242 4242`, caducidad `12/30`, CVV `123`.
+
+## Comprobación automática
+
+El repositorio incluye [el workflow de GitHub Actions](.github/workflows/build-and-test.yml).
+En cada `push` a `main`, *pull request* o ejecución manual, instala .NET 10, restaura
+dependencias, compila en Release y ejecuta los tests.
+
+También se puede ejecutar localmente:
+
+```bash
+dotnet test BibliotecaAspNet.slnx
+```
+
+El primer test (`ColorContrastTests`) comprueba el contraste de las etiquetas de
+categoría, una regla de interfaz real y aislada. Sirve como ejemplo mínimo antes de
+introducir pruebas de controladores, Identity o SQLite en clase.
 
 ## Arquitectura elegida para el curso
 
