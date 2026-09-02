@@ -1,6 +1,6 @@
 @inject UserManager<ApplicationUser> UserManager
-@inject IImageStorage ImageStorage
-@inject ICartService CartService
+@inject ImageStorage ImageStorage
+@inject CartService CartService
 @{
     @* El layout es la plantilla común: calcula navegación y datos de usuario una vez. *@
     var currentUser = User.Identity?.IsAuthenticated == true

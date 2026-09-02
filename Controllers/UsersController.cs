@@ -1,10 +1,10 @@
+using System.Security.Claims;
 using BibliotecaAspNet.Models;
 using BibliotecaAspNet.Services;
 using BibliotecaAspNet.ViewModels.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace BibliotecaAspNet.Controllers;
 
@@ -12,38 +12,33 @@ namespace BibliotecaAspNet.Controllers;
 /// <summary>Panel administrativo de cuentas, roles, estado y avatares.</summary>
 public sealed class UsersController : Controller
 {
-    private readonly IUserService users;
+    private readonly UserService users;
 
-    /// <summary>Recibe los casos de uso comunes de usuarios.</summary>
-    public UsersController(IUserService users)
+    public UsersController(UserService users)
     {
         this.users = users;
     }
 
     [HttpGet]
-    /// <summary>GET: lista y busca cuentas de usuario.</summary>
-    public async Task<IActionResult> Index(string? search, CancellationToken cancellationToken)
+    /// <summary>Identity ofrece roles de forma asíncrona; el resto del CRUD es síncrono.</summary>
+    public async Task<IActionResult> Index(string? search)
     {
         ViewData["Search"] = search;
-        return View(await users.SearchAsync(search, cancellationToken));
+        return View(await users.SearchAsync(search));
     }
 
     [HttpGet]
-    /// <summary>GET: muestra el formulario de alta administrativa.</summary>
     public IActionResult Create() => View(new CreateUserViewModel());
 
     [HttpPost]
-    /// <summary>POST: crea una cuenta con rol, estado y avatar opcional.</summary>
-    public async Task<IActionResult> Create(
-        CreateUserViewModel model,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> Create(CreateUserViewModel model)
     {
         if (!ModelState.IsValid)
         {
             return View(model);
         }
 
-        var result = await users.CreateAsync(model, cancellationToken);
+        var result = await users.CreateAsync(model);
         if (!result.Succeeded)
         {
             AddIdentityErrors(result);
@@ -55,27 +50,21 @@ public sealed class UsersController : Controller
     }
 
     [HttpGet]
-    /// <summary>GET: muestra el perfil y actividad de una cuenta.</summary>
-    public async Task<IActionResult> Details(string id, CancellationToken cancellationToken)
+    public IActionResult Details(string id)
     {
-        var model = await users.GetProfileAsync(id, cancellationToken);
+        var model = users.GetProfile(id);
         return model is null ? NotFound() : View(model);
     }
 
     [HttpGet]
-    /// <summary>GET: carga una cuenta en el formulario de administración.</summary>
-    public async Task<IActionResult> Edit(string id, CancellationToken cancellationToken)
+    public async Task<IActionResult> Edit(string id)
     {
-        var model = await users.GetEditModelAsync(id, cancellationToken);
+        var model = await users.GetEditModelAsync(id);
         return model is null ? NotFound() : View(model);
     }
 
     [HttpPost]
-    /// <summary>POST: actualiza datos, rol, estado y contraseña opcional.</summary>
-    public async Task<IActionResult> Edit(
-        string id,
-        EditUserViewModel model,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> Edit(string id, EditUserViewModel model)
     {
         if (id != model.Id)
         {
@@ -93,14 +82,10 @@ public sealed class UsersController : Controller
             return Challenge();
         }
 
-        var result = await users.UpdateAsync(model, currentAdminId, cancellationToken);
+        var result = await users.UpdateAsync(model, currentAdminId);
         if (!result.Succeeded)
         {
-            foreach (var error in result.Errors)
-            {
-                ModelState.AddModelError(string.Empty, error.Description);
-            }
-
+            AddIdentityErrors(result);
             return View(model);
         }
 
@@ -109,18 +94,14 @@ public sealed class UsersController : Controller
     }
 
     [HttpGet]
-    /// <summary>GET: muestra la confirmación de borrado de una cuenta.</summary>
-    public async Task<IActionResult> Delete(string id, CancellationToken cancellationToken)
+    public IActionResult Delete(string id)
     {
-        var model = await users.GetProfileAsync(id, cancellationToken);
+        var model = users.GetProfile(id);
         return model is null ? NotFound() : View(model);
     }
 
     [HttpPost, ActionName("Delete")]
-    /// <summary>POST: elimina la cuenta respetando las reglas del último administrador.</summary>
-    public async Task<IActionResult> DeleteConfirmed(
-        string id,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> DeleteConfirmed(string id)
     {
         var currentAdminId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (currentAdminId is null)
@@ -128,7 +109,7 @@ public sealed class UsersController : Controller
             return Challenge();
         }
 
-        var result = await users.DeleteAsync(id, currentAdminId, cancellationToken);
+        var result = await users.DeleteAsync(id, currentAdminId);
         if (!result.Succeeded)
         {
             TempData["Error"] = string.Join(" ", result.Errors.Select(error => error.Description));
@@ -139,7 +120,6 @@ public sealed class UsersController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    /// <summary>Convierte errores de Identity en mensajes del formulario.</summary>
     private void AddIdentityErrors(IdentityResult result)
     {
         foreach (var error in result.Errors)

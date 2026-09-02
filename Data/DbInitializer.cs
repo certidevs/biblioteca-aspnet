@@ -18,7 +18,7 @@ public static class DbInitializer
         var context = services.GetRequiredService<ApplicationDbContext>();
         // En producción las migraciones suelen ejecutarse desde el despliegue;
         // aquí se automatiza para que el proyecto sea fácil de arrancar en clase.
-        await context.Database.MigrateAsync();
+        context.Database.Migrate();
 
         var configuration = services.GetRequiredService<IConfiguration>();
         if (!configuration.GetValue("SeedData:Enabled", true))
@@ -46,22 +46,22 @@ public static class DbInitializer
             password: "User123!",
             role: RoleNames.User);
 
-        if (await context.Authors.AnyAsync())
+        if (context.Authors.Any())
         {
             // Esta rama permite actualizar una BD ya existente con nuevos datos demo.
-            await EnsureMinimumDemoBooksAsync(context);
+            EnsureMinimumDemoBooks(context);
 
             // Si se parte de una BD creada antes de introducir pedidos y no había
             // compras históricas, deja igualmente una compra demo disponible.
-            if (!await context.Orders.AnyAsync())
+            if (!context.Orders.Any())
             {
-                var demoBook = await context.Books
+                var demoBook = context.Books
                     .OrderBy(book => book.Id)
-                    .FirstOrDefaultAsync();
+                    .FirstOrDefault();
                 if (demoBook is not null)
                 {
                     context.Orders.Add(CreateDemoOrder(user.Id, demoBook));
-                    await context.SaveChangesAsync();
+                    context.SaveChanges();
                 }
             }
 
@@ -121,7 +121,7 @@ public static class DbInitializer
 
         context.Authors.AddRange(garciaMarquez, austen, cervantes);
         context.Categories.AddRange(novela, clasico, realismoMagico, aventuras);
-        await context.SaveChangesAsync();
+        context.SaveChanges();
 
         var books = new[]
         {
@@ -212,7 +212,7 @@ public static class DbInitializer
         };
 
         context.Books.AddRange(books);
-        await context.SaveChangesAsync();
+        context.SaveChanges();
 
         user.FavoriteBooks.Add(books[0]);
         context.Reviews.Add(new Review
@@ -232,27 +232,22 @@ public static class DbInitializer
             BookId = books[1].Id
         });
         context.Orders.Add(CreateDemoOrder(user.Id, books[0], DateTime.UtcNow.AddDays(-2)));
-        await context.SaveChangesAsync();
+        context.SaveChanges();
     }
 
     /// <summary>Completa el catálogo hasta seis libros cuando la BD ya tenía datos.</summary>
-    private static async Task EnsureMinimumDemoBooksAsync(ApplicationDbContext context)
+    private static void EnsureMinimumDemoBooks(ApplicationDbContext context)
     {
-        if (await context.Books.CountAsync() >= 6)
+        if (context.Books.Count() >= 6)
         {
             return;
         }
 
-        var garciaMarquez = await context.Authors
-            .FirstOrDefaultAsync(author => author.Name == "Gabriel García Márquez");
-        var austen = await context.Authors
-            .FirstOrDefaultAsync(author => author.Name == "Jane Austen");
-        var novela = await context.Categories
-            .FirstOrDefaultAsync(category => category.Name == "Novela");
-        var realismoMagico = await context.Categories
-            .FirstOrDefaultAsync(category => category.Name == "Realismo mágico");
-        var clasico = await context.Categories
-            .FirstOrDefaultAsync(category => category.Name == "Clásico");
+        var garciaMarquez = context.Authors.FirstOrDefault(author => author.Name == "Gabriel García Márquez");
+        var austen = context.Authors.FirstOrDefault(author => author.Name == "Jane Austen");
+        var novela = context.Categories.FirstOrDefault(category => category.Name == "Novela");
+        var realismoMagico = context.Categories.FirstOrDefault(category => category.Name == "Realismo mágico");
+        var clasico = context.Categories.FirstOrDefault(category => category.Name == "Clásico");
 
         if (garciaMarquez is null || austen is null || novela is null || realismoMagico is null || clasico is null)
         {
@@ -260,7 +255,7 @@ public static class DbInitializer
         }
 
         var additionalBooks = new List<Book>();
-        if (!await context.Books.AnyAsync(book => book.Title == "El amor en los tiempos del cólera"))
+        if (!context.Books.Any(book => book.Title == "El amor en los tiempos del cólera"))
         {
             additionalBooks.Add(new Book
             {
@@ -278,7 +273,7 @@ public static class DbInitializer
             });
         }
 
-        if (!await context.Books.AnyAsync(book => book.Title == "Sentido y sensibilidad"))
+        if (!context.Books.Any(book => book.Title == "Sentido y sensibilidad"))
         {
             additionalBooks.Add(new Book
             {
@@ -299,7 +294,7 @@ public static class DbInitializer
         if (additionalBooks.Count > 0)
         {
             context.Books.AddRange(additionalBooks);
-            await context.SaveChangesAsync();
+            context.SaveChanges();
         }
     }
 

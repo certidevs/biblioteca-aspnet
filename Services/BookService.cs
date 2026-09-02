@@ -1,87 +1,113 @@
+using BibliotecaAspNet.Data;
 using BibliotecaAspNet.Models;
-using BibliotecaAspNet.Repositories;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 
 namespace BibliotecaAspNet.Services;
 
 /// <summary>
-/// Casos de uso de libros. Aquí se coordinan repositorios, categorías y almacenamiento
-/// de imágenes antes de que el controlador devuelva una respuesta.
+/// Operaciones específicas de libros: relación N:M, favoritos y portadas.
+/// Las consultas EF Core están aquí de forma explícita y sin un repositorio artificial.
 /// </summary>
-public sealed class BookService : IBookService
+public sealed class BookService
 {
-    private readonly IBookRepository books;
-    private readonly IAuthorRepository authors;
-    private readonly ICategoryRepository categories;
-    private readonly IImageStorage images;
+    private readonly ApplicationDbContext context;
+    private readonly ImageStorage images;
 
-    /// <summary>Recibe las dependencias necesarias mediante inyección de dependencias.</summary>
-    public BookService(
-        IBookRepository books,
-        IAuthorRepository authors,
-        ICategoryRepository categories,
-        IImageStorage images)
+    public BookService(ApplicationDbContext context, ImageStorage images)
     {
-        this.books = books;
-        this.authors = authors;
-        this.categories = categories;
+        this.context = context;
         this.images = images;
     }
 
-    /// <summary>Busca libros con los filtros del catálogo.</summary>
-    public Task<List<Book>> SearchAsync(
+    /// <summary>Busca libros y aplica únicamente los filtros elegidos en la página.</summary>
+    public List<Book> Search(
         string? search,
         int? authorId,
         int? categoryId,
         bool? available,
         bool favoritesOnly,
-        string? userId,
-        CancellationToken cancellationToken = default)
+        string? userId)
     {
-        return books.SearchAsync(
-            search,
-            authorId,
-            categoryId,
-            available,
-            favoritesOnly,
-            userId,
-            cancellationToken);
+        var query = context.Books
+            .AsNoTracking()
+            .Include(book => book.Author)
+            .Include(book => book.Categories)
+            .Include(book => book.FavoriteUsers)
+            .AsSplitQuery()
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var value = search.Trim();
+            query = query.Where(book =>
+                EF.Functions.Like(book.Title, $"%{value}%") ||
+                EF.Functions.Like(book.Author.Name, $"%{value}%"));
+        }
+
+        if (authorId.HasValue)
+        {
+            query = query.Where(book => book.AuthorId == authorId.Value);
+        }
+
+        if (categoryId.HasValue)
+        {
+            query = query.Where(book => book.Categories.Any(category => category.Id == categoryId.Value));
+        }
+
+        if (available.HasValue)
+        {
+            query = query.Where(book => book.Available == available.Value);
+        }
+
+        if (favoritesOnly && !string.IsNullOrWhiteSpace(userId))
+        {
+            query = query.Where(book => book.FavoriteUsers.Any(user => user.Id == userId));
+        }
+
+        return query.OrderBy(book => book.Title).ToList();
     }
 
-    /// <summary>Obtiene la ficha pública de un libro.</summary>
-    public Task<Book?> GetDetailsAsync(int id, CancellationToken cancellationToken = default)
+    /// <summary>Carga toda la información que muestra la ficha pública.</summary>
+    public Book? GetDetails(int id) => context.Books
+        .AsNoTracking()
+        .Include(book => book.Author)
+        .Include(book => book.Categories)
+        .Include(book => book.FavoriteUsers)
+        .Include(book => book.Reviews)
+        .ThenInclude(review => review.User)
+        .AsSplitQuery()
+        .SingleOrDefault(book => book.Id == id);
+
+    /// <summary>Carga el libro rastreado para poder reconstruir las categorías al editar.</summary>
+    public Book? GetForEdit(int id) => context.Books
+        .Include(book => book.Categories)
+        .SingleOrDefault(book => book.Id == id);
+
+    /// <summary>Obtiene libros existentes para el carrito o el checkout.</summary>
+    public List<Book> GetByIds(IEnumerable<int> ids)
     {
-        return books.GetDetailsAsync(id, cancellationToken);
+        var selectedIds = ids.Distinct().ToArray();
+        return context.Books
+            .AsNoTracking()
+            .Include(book => book.Author)
+            .Where(book => selectedIds.Contains(book.Id))
+            .OrderBy(book => book.Title)
+            .ToList();
     }
 
-    /// <summary>Obtiene un libro con categorías rastreadas para el formulario de edición.</summary>
-    public Task<Book?> GetForEditAsync(int id, CancellationToken cancellationToken = default)
+    /// <summary>Crea el libro, resuelve las IDs del formulario y guarda la portada opcional.</summary>
+    public void Create(Book book, IEnumerable<int> categoryIds, IFormFile? coverImage)
     {
-        return books.GetForEditAsync(id, cancellationToken);
-    }
-
-    /// <summary>Valida autor, resuelve categorías y guarda libro y portada.</summary>
-    public async Task CreateAsync(
-        Book book,
-        IEnumerable<int> categoryIds,
-        IFormFile? coverImage,
-        CancellationToken cancellationToken = default)
-    {
-        var author = await authors.GetByIdAsync(book.AuthorId, cancellationToken)
+        var author = context.Authors.Find(book.AuthorId)
             ?? throw new InvalidOperationException("El autor seleccionado no existe.");
-        // Se cargan entidades existentes: el formulario solo envía sus IDs.
-        var selectedCategories = await categories.GetByIdsAsync(categoryIds, cancellationToken);
-
         book.Author = author;
-        book.Categories = selectedCategories;
+        book.Categories = GetCategories(categoryIds);
 
         string? newCoverFileName = null;
         if (coverImage is not null)
         {
-            var upload = await images.SaveAsync(
-                coverImage,
-                ImageFolder.BookCovers,
-                cancellationToken);
+            var upload = images.Save(coverImage, ImageFolder.BookCovers);
             if (!upload.Succeeded)
             {
                 throw new InvalidOperationException(upload.Error);
@@ -93,28 +119,21 @@ public sealed class BookService : IBookService
 
         try
         {
-            await books.AddAsync(book, cancellationToken);
-            await books.SaveChangesAsync(cancellationToken);
+            context.Books.Add(book);
+            context.SaveChanges();
         }
         catch
         {
-            // Si falla la BD, no dejamos en disco una imagen huérfana.
             images.Delete(ImageFolder.BookCovers, newCoverFileName);
             throw;
         }
     }
 
     /// <summary>Actualiza campos, asociaciones y portada de un libro existente.</summary>
-    public async Task<bool> UpdateAsync(
-        int id,
-        Book book,
-        IEnumerable<int> categoryIds,
-        IFormFile? coverImage,
-        bool removeCoverImage,
-        CancellationToken cancellationToken = default)
+    public bool Update(int id, Book book, IEnumerable<int> categoryIds, IFormFile? coverImage, bool removeCoverImage)
     {
-        var existing = await books.GetForEditAsync(id, cancellationToken);
-        var author = await authors.GetByIdAsync(book.AuthorId, cancellationToken);
+        var existing = GetForEdit(id);
+        var author = context.Authors.Find(book.AuthorId);
         if (existing is null || author is null)
         {
             return false;
@@ -124,10 +143,7 @@ public sealed class BookService : IBookService
         string? newCoverFileName = null;
         if (coverImage is not null)
         {
-            var upload = await images.SaveAsync(
-                coverImage,
-                ImageFolder.BookCovers,
-                cancellationToken);
+            var upload = images.Save(coverImage, ImageFolder.BookCovers);
             if (!upload.Succeeded)
             {
                 throw new InvalidOperationException(upload.Error);
@@ -144,25 +160,23 @@ public sealed class BookService : IBookService
         existing.Pages = book.Pages;
         existing.Language = book.Language;
         existing.Synopsis = book.Synopsis;
-        existing.CoverImageFileName = newCoverFileName
-            ?? (removeCoverImage ? null : oldCoverFileName);
         existing.AuthorId = author.Id;
         existing.Author = author;
+        existing.CoverImageFileName = newCoverFileName ?? (removeCoverImage ? null : oldCoverFileName);
 
-        // Se reconstruye la colección N:M a partir de los IDs seleccionados.
+        // Para actualizar N:M se reemplaza la colección por las categorías seleccionadas.
         existing.Categories.Clear();
-        foreach (var category in await categories.GetByIdsAsync(categoryIds, cancellationToken))
+        foreach (var category in GetCategories(categoryIds))
         {
             existing.Categories.Add(category);
         }
 
         try
         {
-            await books.SaveChangesAsync(cancellationToken);
+            context.SaveChanges();
         }
         catch
         {
-            // La nueva portada solo se conserva si también se guardó el libro.
             images.Delete(ImageFolder.BookCovers, newCoverFileName);
             throw;
         }
@@ -175,34 +189,52 @@ public sealed class BookService : IBookService
         return true;
     }
 
-    /// <summary>Elimina un libro y su portada si la operación tiene éxito.</summary>
-    public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
+    /// <summary>Elimina el libro y su portada local.</summary>
+    public bool Delete(int id)
     {
-        var book = await books.GetByIdAsync(id, cancellationToken);
+        var book = context.Books.Find(id);
         if (book is null)
         {
             return false;
         }
 
         var coverFileName = book.CoverImageFileName;
-        books.Delete(book);
-        await books.SaveChangesAsync(cancellationToken);
+        context.Books.Remove(book);
+        context.SaveChanges();
         images.Delete(ImageFolder.BookCovers, coverFileName);
         return true;
     }
 
-    /// <summary>Cambia el favorito del usuario autenticado.</summary>
-    public Task<bool> ToggleFavoriteAsync(
-        int bookId,
-        string userId,
-        CancellationToken cancellationToken = default)
+    /// <summary>Añade o quita la fila N:M de favoritos y devuelve el estado final.</summary>
+    public bool ToggleFavorite(int bookId, string userId)
     {
-        return books.ToggleFavoriteAsync(bookId, userId, cancellationToken);
+        var book = context.Books.Include(item => item.FavoriteUsers).SingleOrDefault(item => item.Id == bookId);
+        var user = context.Users.Find(userId);
+        if (book is null || user is null)
+        {
+            return false;
+        }
+
+        var favoriteUser = book.FavoriteUsers.SingleOrDefault(item => item.Id == userId);
+        if (favoriteUser is null)
+        {
+            book.FavoriteUsers.Add(user);
+            context.SaveChanges();
+            return true;
+        }
+
+        book.FavoriteUsers.Remove(favoriteUser);
+        context.SaveChanges();
+        return false;
     }
 
-    /// <summary>Devuelve el total de libros.</summary>
-    public Task<int> CountAsync(CancellationToken cancellationToken = default)
+    /// <summary>Cuenta libros para el dashboard.</summary>
+    public int Count() => context.Books.Count();
+
+    /// <summary>Convierte IDs de formulario en entidades reales de la relación N:M.</summary>
+    private List<Category> GetCategories(IEnumerable<int> categoryIds)
     {
-        return books.CountAsync(cancellationToken);
+        var selectedIds = categoryIds.Distinct().ToArray();
+        return context.Categories.Where(category => selectedIds.Contains(category.Id)).ToList();
     }
 }

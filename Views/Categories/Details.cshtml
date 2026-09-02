@@ -1,5 +1,5 @@
 @model Category
-@inject IImageStorage ImageStorage
+@inject ImageStorage ImageStorage
 @{
     ViewData["Title"] = Model.Name;
     var color = ColorContrast.NormalizeHex(Model.Color);

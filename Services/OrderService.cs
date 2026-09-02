@@ -1,33 +1,23 @@
+using BibliotecaAspNet.Data;
 using BibliotecaAspNet.Models;
-using BibliotecaAspNet.Repositories;
 using BibliotecaAspNet.ViewModels.Orders;
+using Microsoft.EntityFrameworkCore;
 
 namespace BibliotecaAspNet.Services;
 
-/// <summary>
-/// Casos de uso de compra. El servicio vuelve a validar el carrito en el servidor
-/// porque nunca se debe confiar en precios o cantidades enviados por el navegador.
-/// </summary>
-public sealed class OrderService : IOrderService
+/// <summary>Checkout y consultas de pedidos; valida siempre el catálogo en el servidor.</summary>
+public sealed class OrderService
 {
-    private readonly IBookRepository books;
-    private readonly IOrderRepository orders;
+    private readonly ApplicationDbContext context;
 
-    /// <summary>Recibe los repositorios de catálogo y pedidos.</summary>
-    public OrderService(IBookRepository books, IOrderRepository orders)
+    public OrderService(ApplicationDbContext context)
     {
-        this.books = books;
-        this.orders = orders;
+        this.context = context;
     }
 
     /// <summary>Valida tarjeta demo, disponibilidad y crea el pedido con sus líneas.</summary>
-    public async Task<CheckoutResult> CheckoutAsync(
-        string userId,
-        IReadOnlyDictionary<int, int> quantities,
-        CheckoutViewModel payment,
-        CancellationToken cancellationToken = default)
+    public CheckoutResult Checkout(string userId, IReadOnlyDictionary<int, int> quantities, CheckoutViewModel payment)
     {
-        // Se descartan IDs y cantidades imposibles antes de consultar la BD.
         var requestedLines = quantities
             .Where(item => item.Key > 0 && item.Value is >= 1 and <= 99)
             .ToDictionary(item => item.Key, item => item.Value);
@@ -36,14 +26,16 @@ public sealed class OrderService : IOrderService
             return new CheckoutResult(Error: "El carrito está vacío.");
         }
 
-        // La tarjeta es ficticia: solo se valida formato y checksum, nunca se persiste completa.
         var cardNumber = NormalizeCardNumber(payment.CardNumber);
         if (cardNumber.Length != 16 || !PassesLuhnCheck(cardNumber))
         {
             return new CheckoutResult(Error: "La tarjeta de prueba debe tener 16 dígitos válidos. Usa 4242 4242 4242 4242.");
         }
 
-        var catalogBooks = await books.GetByIdsAsync(requestedLines.Keys, cancellationToken);
+        var catalogBooks = context.Books
+            .Where(book => requestedLines.Keys.Contains(book.Id))
+            .OrderBy(book => book.Title)
+            .ToList();
         if (catalogBooks.Count != requestedLines.Count)
         {
             return new CheckoutResult(Error: "Uno de los libros del carrito ya no existe.");
@@ -64,72 +56,68 @@ public sealed class OrderService : IOrderService
             PaymentLastFour = cardNumber[^4..]
         };
 
-        // El precio se toma del catálogo actual y se copia a UnitPrice como histórico.
+        // Se copia precio y título: el pedido sigue siendo histórico si el libro cambia.
         foreach (var book in catalogBooks)
         {
-            var quantity = requestedLines[book.Id];
             order.Items.Add(new OrderItem
             {
                 BookId = book.Id,
                 BookTitle = book.Title,
-                Quantity = quantity,
+                Quantity = requestedLines[book.Id],
                 UnitPrice = book.Price
             });
         }
 
         order.Total = order.Items.Sum(item => item.LineTotal);
-        await orders.AddAsync(order, cancellationToken);
-        await orders.SaveChangesAsync(cancellationToken);
+        context.Orders.Add(order);
+        context.SaveChanges();
         return new CheckoutResult(order);
     }
 
-    /// <summary>Lista los pedidos del usuario.</summary>
-    public Task<List<Order>> GetForUserAsync(
-        string userId,
-        CancellationToken cancellationToken = default)
+    /// <summary>Lista el histórico del usuario autenticado.</summary>
+    public List<Order> GetForUser(string userId) => QueryWithDetails()
+        .Where(order => order.UserId == userId)
+        .OrderByDescending(order => order.CreatedAt)
+        .ToList();
+
+    /// <summary>Lista todos los pedidos para el panel de administración.</summary>
+    public List<Order> GetAll() => QueryWithDetails()
+        .Include(order => order.User)
+        .OrderByDescending(order => order.CreatedAt)
+        .ToList();
+
+    /// <summary>Devuelve un pedido solo al propietario o a un administrador.</summary>
+    public Order? GetDetails(int id, string? userId, bool includeAllUsers)
     {
-        return orders.GetForUserAsync(userId, cancellationToken);
+        var query = QueryWithDetails();
+        if (!includeAllUsers)
+        {
+            query = query.Where(order => order.UserId == userId);
+        }
+
+        return query.Include(order => order.User).SingleOrDefault(order => order.Id == id);
     }
 
-    /// <summary>Lista todos los pedidos para administración.</summary>
-    public Task<List<Order>> GetAllAsync(CancellationToken cancellationToken = default)
-    {
-        return orders.GetAllWithDetailsAsync(cancellationToken);
-    }
+    /// <summary>Cuenta pedidos para el resumen del perfil.</summary>
+    public int CountForUser(string userId) => context.Orders.Count(order => order.UserId == userId);
 
-    /// <summary>Obtiene un pedido respetando la visibilidad del usuario.</summary>
-    public Task<Order?> GetDetailsAsync(
-        int id,
-        string? userId,
-        bool includeAllUsers,
-        CancellationToken cancellationToken = default)
-    {
-        return orders.GetDetailsAsync(id, userId, includeAllUsers, cancellationToken);
-    }
+    /// <summary>Suma solo compras pagadas para el resumen del perfil.</summary>
+    public decimal TotalForUser(string userId) => context.Orders
+        .Where(order => order.UserId == userId && order.Status == OrderStatus.Paid)
+        .Select(order => (decimal?)order.Total)
+        .Sum() ?? 0m;
 
-    /// <summary>Cuenta pedidos de un usuario.</summary>
-    public Task<int> CountForUserAsync(
-        string userId,
-        CancellationToken cancellationToken = default)
-    {
-        return orders.CountForUserAsync(userId, cancellationToken);
-    }
+    /// <summary>Consulta base que carga las líneas y, si existe, el libro actual.</summary>
+    private IQueryable<Order> QueryWithDetails() => context.Orders
+        .AsNoTracking()
+        .Include(order => order.Items)
+        .ThenInclude(item => item.Book)
+        .AsSplitQuery();
 
-    /// <summary>Suma el gasto del usuario en pedidos pagados.</summary>
-    public Task<decimal> TotalForUserAsync(
-        string userId,
-        CancellationToken cancellationToken = default)
-    {
-        return orders.TotalForUserAsync(userId, cancellationToken);
-    }
+    private static string NormalizeCardNumber(string? cardNumber) =>
+        new string((cardNumber ?? string.Empty).Where(char.IsDigit).ToArray());
 
-    /// <summary>Elimina espacios y guiones para trabajar con los 16 dígitos.</summary>
-    private static string NormalizeCardNumber(string? cardNumber)
-    {
-        return new string((cardNumber ?? string.Empty).Where(char.IsDigit).ToArray());
-    }
-
-    /// <summary>Aplica el checksum de Luhn, habitual en validaciones de tarjetas.</summary>
+    /// <summary>Aplica el checksum de Luhn usado en validaciones de tarjeta.</summary>
     private static bool PassesLuhnCheck(string cardNumber)
     {
         var sum = 0;

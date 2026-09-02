@@ -1,5 +1,5 @@
 @model ProfileViewModel
-@inject IImageStorage ImageStorage
+@inject ImageStorage ImageStorage
 @{
     ViewData["Title"] = "Detalle de usuario";
     var name = Model.User.DisplayName ?? Model.User.UserName ?? "Usuario";

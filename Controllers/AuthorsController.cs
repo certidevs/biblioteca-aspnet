@@ -6,44 +6,40 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BibliotecaAspNet.Controllers;
 
-/// <summary>Acciones MVC del CRUD de autores.</summary>
+/// <summary>CRUD MVC de autores. El controlador traduce HTTP a una vista o redirección.</summary>
 public sealed class AuthorsController : Controller
 {
-    private readonly IAuthorService authors;
+    private readonly AuthorService authors;
 
-    /// <summary>Recibe el servicio de autores mediante inyección de dependencias.</summary>
-    public AuthorsController(IAuthorService authors)
+    public AuthorsController(AuthorService authors)
     {
         this.authors = authors;
     }
 
     [HttpGet]
     /// <summary>GET: muestra autores y aplica el texto de búsqueda.</summary>
-    public async Task<IActionResult> Index(string? search, CancellationToken cancellationToken)
+    public IActionResult Index(string? search)
     {
         ViewData["Search"] = search;
-        return View(await authors.SearchAsync(search, cancellationToken));
+        return View(authors.Search(search));
     }
 
     [HttpGet]
     /// <summary>GET: muestra un autor con sus libros.</summary>
-    public async Task<IActionResult> Details(int id, CancellationToken cancellationToken)
+    public IActionResult Details(int id)
     {
-        var author = await authors.GetDetailsAsync(id, cancellationToken);
+        var author = authors.GetDetails(id);
         return author is null ? NotFound() : View(author);
     }
 
     [Authorize(Roles = RoleNames.Admin)]
     [HttpGet]
-    /// <summary>GET protegido: muestra el formulario de alta.</summary>
     public IActionResult Create() => View(new AuthorFormViewModel());
 
     [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
-    /// <summary>POST protegido: valida y persiste el nuevo autor.</summary>
-    public async Task<IActionResult> Create(
-        AuthorFormViewModel model,
-        CancellationToken cancellationToken)
+    /// <summary>POST: valida el formulario antes de insertar el autor.</summary>
+    public IActionResult Create(AuthorFormViewModel model)
     {
         if (!ModelState.IsValid)
         {
@@ -52,7 +48,7 @@ public sealed class AuthorsController : Controller
 
         try
         {
-            await authors.CreateAsync(ToEntity(model), model.Photo, cancellationToken);
+            authors.Create(ToEntity(model), model.Photo);
         }
         catch (InvalidOperationException exception)
         {
@@ -66,22 +62,16 @@ public sealed class AuthorsController : Controller
 
     [Authorize(Roles = RoleNames.Admin)]
     [HttpGet]
-    /// <summary>GET protegido: carga un autor en el formulario de edición.</summary>
-    public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken)
+    public IActionResult Edit(int id)
     {
-        var author = await authors.GetDetailsAsync(id, cancellationToken);
-        return author is null
-            ? NotFound()
-            : View(ToViewModel(author));
+        var author = authors.GetDetails(id);
+        return author is null ? NotFound() : View(ToViewModel(author));
     }
 
     [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
-    /// <summary>POST protegido: actualiza el autor después de validar el formulario.</summary>
-    public async Task<IActionResult> Edit(
-        int id,
-        AuthorFormViewModel model,
-        CancellationToken cancellationToken)
+    /// <summary>POST: actualiza solo campos editables y conserva la foto al fallar la validación.</summary>
+    public IActionResult Edit(int id, AuthorFormViewModel model)
     {
         if (id != model.Id)
         {
@@ -90,18 +80,13 @@ public sealed class AuthorsController : Controller
 
         if (!ModelState.IsValid)
         {
-            await RestoreCurrentPhotoAsync(model, id, cancellationToken);
+            RestoreCurrentPhoto(model, id);
             return View(model);
         }
 
         try
         {
-            if (!await authors.UpdateAsync(
-                    id,
-                    ToEntity(model),
-                    model.Photo,
-                    model.RemovePhoto,
-                    cancellationToken))
+            if (!authors.Update(id, ToEntity(model), model.Photo, model.RemovePhoto))
             {
                 return NotFound();
             }
@@ -109,7 +94,7 @@ public sealed class AuthorsController : Controller
         catch (InvalidOperationException exception)
         {
             ModelState.AddModelError(string.Empty, exception.Message);
-            await RestoreCurrentPhotoAsync(model, id, cancellationToken);
+            RestoreCurrentPhoto(model, id);
             return View(model);
         }
 
@@ -119,19 +104,17 @@ public sealed class AuthorsController : Controller
 
     [Authorize(Roles = RoleNames.Admin)]
     [HttpGet]
-    /// <summary>GET protegido: muestra la confirmación de borrado.</summary>
-    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
+    public IActionResult Delete(int id)
     {
-        var author = await authors.GetDetailsAsync(id, cancellationToken);
+        var author = authors.GetDetails(id);
         return author is null ? NotFound() : View(author);
     }
 
     [Authorize(Roles = RoleNames.Admin)]
     [HttpPost, ActionName("Delete")]
-    /// <summary>POST protegido: confirma el borrado del autor.</summary>
-    public async Task<IActionResult> DeleteConfirmed(int id, CancellationToken cancellationToken)
+    public IActionResult DeleteConfirmed(int id)
     {
-        if (!await authors.DeleteAsync(id, cancellationToken))
+        if (!authors.Delete(id))
         {
             return NotFound();
         }
@@ -140,7 +123,7 @@ public sealed class AuthorsController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    /// <summary>Mapea el DTO de formulario a la entidad persistente.</summary>
+    /// <summary>Convierte el ViewModel del formulario en la entidad que guarda EF Core.</summary>
     private static Author ToEntity(AuthorFormViewModel model) => new()
     {
         Id = model.Id,
@@ -150,7 +133,6 @@ public sealed class AuthorsController : Controller
         Nationality = model.Nationality
     };
 
-    /// <summary>Mapea la entidad a un DTO seguro para la vista de edición.</summary>
     private static AuthorFormViewModel ToViewModel(Author author) => new()
     {
         Id = author.Id,
@@ -161,13 +143,8 @@ public sealed class AuthorsController : Controller
         CurrentPhotoFileName = author.PhotoFileName
     };
 
-    /// <summary>Vuelve a cargar la foto actual si el formulario de edición falla.</summary>
-    private async Task RestoreCurrentPhotoAsync(
-        AuthorFormViewModel model,
-        int id,
-        CancellationToken cancellationToken)
+    private void RestoreCurrentPhoto(AuthorFormViewModel model, int id)
     {
-        var current = await authors.GetDetailsAsync(id, cancellationToken);
-        model.CurrentPhotoFileName = current?.PhotoFileName;
+        model.CurrentPhotoFileName = authors.GetDetails(id)?.PhotoFileName;
     }
 }

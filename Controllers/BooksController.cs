@@ -1,26 +1,25 @@
+using System.Security.Claims;
 using BibliotecaAspNet.Models;
 using BibliotecaAspNet.Services;
 using BibliotecaAspNet.ViewModels.Books;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace BibliotecaAspNet.Controllers;
 
 /// <summary>Catálogo público y CRUD administrativo de libros.</summary>
 public sealed class BooksController : Controller
 {
-    private readonly IBookService books;
-    private readonly IAuthorService authors;
-    private readonly ICategoryService categories;
-    private readonly ICartService cart;
+    private readonly BookService books;
+    private readonly AuthorService authors;
+    private readonly CategoryService categories;
+    private readonly CartService cart;
 
-    /// <summary>Recibe servicios de libros, autores, categorías y carrito.</summary>
     public BooksController(
-        IBookService books,
-        IAuthorService authors,
-        ICategoryService categories,
-        ICartService cart)
+        BookService books,
+        AuthorService authors,
+        CategoryService categories,
+        CartService cart)
     {
         this.books = books;
         this.authors = authors;
@@ -29,17 +28,11 @@ public sealed class BooksController : Controller
     }
 
     [HttpGet]
-    /// <summary>GET: lista libros con filtros y prepara los selectores del catálogo.</summary>
-    public async Task<IActionResult> Index(
-        string? search,
-        int? authorId,
-        int? categoryId,
-        bool? available,
-        bool favoritesOnly,
-        CancellationToken cancellationToken)
+    /// <summary>GET: lista libros con filtros y rellena sus selectores.</summary>
+    public IActionResult Index(string? search, int? authorId, int? categoryId, bool? available, bool favoritesOnly)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var model = new BookListViewModel
+        return View(new BookListViewModel
         {
             Search = search,
             AuthorId = authorId,
@@ -47,86 +40,72 @@ public sealed class BooksController : Controller
             Available = available,
             FavoritesOnly = favoritesOnly,
             CurrentUserId = userId,
-            Books = await books.SearchAsync(search, authorId, categoryId, available, favoritesOnly, userId, cancellationToken),
-            Authors = await authors.SearchAsync(null, cancellationToken),
-            Categories = await categories.SearchAsync(null, cancellationToken)
-        };
-
-        return View(model);
+            Books = books.Search(search, authorId, categoryId, available, favoritesOnly, userId),
+            Authors = authors.Search(null),
+            Categories = categories.Search(null)
+        });
     }
 
     [HttpGet]
-    /// <summary>GET: muestra la ficha, favoritos y reseñas de un libro.</summary>
-    public async Task<IActionResult> Details(int id, CancellationToken cancellationToken)
+    public IActionResult Details(int id)
     {
-        var book = await books.GetDetailsAsync(id, cancellationToken);
+        var book = books.GetDetails(id);
         return book is null ? NotFound() : View(book);
     }
 
     [Authorize(Roles = RoleNames.Admin)]
     [HttpGet]
-    /// <summary>GET protegido: muestra el alta con autores y categorías disponibles.</summary>
-    public async Task<IActionResult> Create(CancellationToken cancellationToken)
+    public IActionResult Create()
     {
         var model = new BookFormViewModel();
-        await FillCatalogOptionsAsync(model, cancellationToken);
+        FillCatalogOptions(model);
         return View(model);
     }
 
     [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
-    /// <summary>POST protegido: valida y crea el libro con sus categorías y portada.</summary>
-    public async Task<IActionResult> Create(
-        BookFormViewModel model,
-        CancellationToken cancellationToken)
+    /// <summary>POST: el ViewModel trae IDs; el servicio carga las entidades de verdad.</summary>
+    public IActionResult Create(BookFormViewModel model)
     {
         if (!ModelState.IsValid)
         {
-            await FillCatalogOptionsAsync(model, cancellationToken);
+            FillCatalogOptions(model);
             return View(model);
         }
 
         try
         {
-            await books.CreateAsync(
-                model.ToBook(),
-                model.SelectedCategoryIds,
-                model.CoverImage,
-                cancellationToken);
-            TempData["Message"] = "Libro creado correctamente.";
-            return RedirectToAction(nameof(Index));
+            books.Create(model.ToBook(), model.SelectedCategoryIds, model.CoverImage);
         }
         catch (InvalidOperationException exception)
         {
             ModelState.AddModelError(string.Empty, exception.Message);
-            await FillCatalogOptionsAsync(model, cancellationToken);
+            FillCatalogOptions(model);
             return View(model);
         }
+
+        TempData["Message"] = "Libro creado correctamente.";
+        return RedirectToAction(nameof(Index));
     }
 
     [Authorize(Roles = RoleNames.Admin)]
     [HttpGet]
-    /// <summary>GET protegido: carga libro y asociaciones en el formulario de edición.</summary>
-    public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken)
+    public IActionResult Edit(int id)
     {
-        var book = await books.GetForEditAsync(id, cancellationToken);
+        var book = books.GetForEdit(id);
         if (book is null)
         {
             return NotFound();
         }
 
         var model = BookFormViewModel.FromBook(book);
-        await FillCatalogOptionsAsync(model, cancellationToken);
+        FillCatalogOptions(model);
         return View(model);
     }
 
     [Authorize(Roles = RoleNames.Admin)]
     [HttpPost]
-    /// <summary>POST protegido: actualiza campos, categorías y portada del libro.</summary>
-    public async Task<IActionResult> Edit(
-        int id,
-        BookFormViewModel model,
-        CancellationToken cancellationToken)
+    public IActionResult Edit(int id, BookFormViewModel model)
     {
         if (id != model.Id)
         {
@@ -135,20 +114,13 @@ public sealed class BooksController : Controller
 
         if (!ModelState.IsValid)
         {
-            await FillCatalogOptionsAsync(model, cancellationToken);
+            FillCatalogOptions(model);
             return View(model);
         }
 
         try
         {
-            var updated = await books.UpdateAsync(
-                id,
-                model.ToBook(),
-                model.SelectedCategoryIds,
-                model.CoverImage,
-                model.RemoveCoverImage,
-                cancellationToken);
-            if (!updated)
+            if (!books.Update(id, model.ToBook(), model.SelectedCategoryIds, model.CoverImage, model.RemoveCoverImage))
             {
                 return NotFound();
             }
@@ -156,7 +128,7 @@ public sealed class BooksController : Controller
         catch (InvalidOperationException exception)
         {
             ModelState.AddModelError(string.Empty, exception.Message);
-            await FillCatalogOptionsAsync(model, cancellationToken);
+            FillCatalogOptions(model);
             return View(model);
         }
 
@@ -166,20 +138,17 @@ public sealed class BooksController : Controller
 
     [Authorize(Roles = RoleNames.Admin)]
     [HttpGet]
-    /// <summary>GET protegido: muestra la confirmación de borrado.</summary>
-    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
+    public IActionResult Delete(int id)
     {
-        var book = await books.GetDetailsAsync(id, cancellationToken);
+        var book = books.GetDetails(id);
         return book is null ? NotFound() : View(book);
     }
 
     [Authorize(Roles = RoleNames.Admin)]
     [HttpPost, ActionName("Delete")]
-    /// <summary>POST protegido: confirma el borrado del libro.</summary>
-    public async Task<IActionResult> DeleteConfirmed(int id, CancellationToken cancellationToken)
+    public IActionResult DeleteConfirmed(int id)
     {
-        var deleted = await books.DeleteAsync(id, cancellationToken);
-        if (!deleted)
+        if (!books.Delete(id))
         {
             return NotFound();
         }
@@ -190,11 +159,8 @@ public sealed class BooksController : Controller
 
     [Authorize]
     [HttpPost]
-    /// <summary>POST autenticado: alterna el favorito y vuelve a la página de origen.</summary>
-    public async Task<IActionResult> ToggleFavorite(
-        int id,
-        string? returnUrl,
-        CancellationToken cancellationToken)
+    /// <summary>POST: alterna una relación N:M entre la cuenta actual y el libro.</summary>
+    public IActionResult ToggleFavorite(int id, string? returnUrl)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (userId is null)
@@ -202,8 +168,7 @@ public sealed class BooksController : Controller
             return Challenge();
         }
 
-        var isFavorite = await books.ToggleFavoriteAsync(id, userId, cancellationToken);
-        TempData["Message"] = isFavorite
+        TempData["Message"] = books.ToggleFavorite(id, userId)
             ? "Libro añadido a favoritos."
             : "Libro quitado de favoritos.";
         return RedirectToLocal(returnUrl, id);
@@ -211,42 +176,24 @@ public sealed class BooksController : Controller
 
     [Authorize]
     [HttpPost]
-    /// <summary>POST autenticado: añade unidades al carrito de sesión.</summary>
-    public async Task<IActionResult> AddToCart(
-        int id,
-        int quantity = 1,
-        string? returnUrl = null,
-        CancellationToken cancellationToken = default)
+    public IActionResult AddToCart(int id, int quantity = 1, string? returnUrl = null)
     {
-        var result = await cart.AddAsync(id, quantity, cancellationToken);
-        if (result.Succeeded)
-        {
-            TempData["Message"] = quantity > 1
-                ? $"Se han añadido {quantity} unidades al carrito."
-                : "Libro añadido al carrito.";
-        }
-        else
-        {
-            TempData["Error"] = result.Error;
-        }
-
+        var result = cart.Add(id, quantity);
+        TempData[result.Succeeded ? "Message" : "Error"] = result.Succeeded
+            ? quantity > 1 ? $"Se han añadido {quantity} unidades al carrito." : "Libro añadido al carrito."
+            : result.Error;
         return RedirectToLocal(returnUrl, id);
     }
 
-    /// <summary>Rellena las opciones necesarias para los selectores de Create/Edit.</summary>
-    private async Task FillCatalogOptionsAsync(
-        BookFormViewModel model,
-        CancellationToken cancellationToken)
+    /// <summary>Evita repetir las consultas para los selectores de Create y Edit.</summary>
+    private void FillCatalogOptions(BookFormViewModel model)
     {
-        model.Authors = await authors.SearchAsync(null, cancellationToken);
-        model.Categories = await categories.SearchAsync(null, cancellationToken);
+        model.Authors = authors.Search(null);
+        model.Categories = categories.Search(null);
     }
 
-    /// <summary>Evita redirecciones externas y usa el detalle como fallback.</summary>
-    private IActionResult RedirectToLocal(string? returnUrl, int bookId)
-    {
-        return Url.IsLocalUrl(returnUrl)
-            ? Redirect(returnUrl!)
-            : RedirectToAction(nameof(Details), new { id = bookId })!;
-    }
+    /// <summary>Evita que un parámetro returnUrl redirija a una web externa.</summary>
+    private IActionResult RedirectToLocal(string? returnUrl, int bookId) => Url.IsLocalUrl(returnUrl)
+        ? Redirect(returnUrl!)
+        : RedirectToAction(nameof(Details), new { id = bookId })!;
 }

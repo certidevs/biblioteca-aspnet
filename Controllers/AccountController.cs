@@ -33,11 +33,8 @@ public sealed class AccountController : Controller
 
     [HttpPost]
     [AllowAnonymous]
-    /// <summary>Valida credenciales y redirige a la URL local solicitada.</summary>
-    public async Task<IActionResult> Login(
-        LoginViewModel model,
-        string? returnUrl = null,
-        CancellationToken cancellationToken = default)
+    /// <summary>Identity necesita esta operación asíncrona para validar contraseña y crear la cookie.</summary>
+    public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
     {
         ViewData["ReturnUrl"] = returnUrl;
         if (!ModelState.IsValid)
@@ -86,9 +83,7 @@ public sealed class AccountController : Controller
     [HttpPost]
     [AllowAnonymous]
     /// <summary>Crea una cuenta User y la inicia automáticamente.</summary>
-    public async Task<IActionResult> Register(
-        RegisterViewModel model,
-        CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Register(RegisterViewModel model)
     {
         if (!ModelState.IsValid)
         {

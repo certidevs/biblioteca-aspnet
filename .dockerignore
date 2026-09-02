@@ -1,0 +1,13 @@
+.git
+.vscode
+bin
+obj
+App_Data
+wwwroot/uploads/avatars/*
+!wwwroot/uploads/avatars/.gitkeep
+wwwroot/uploads/author-photos/*
+!wwwroot/uploads/author-photos/.gitkeep
+!wwwroot/uploads/author-photos/demo-*.jpg
+wwwroot/uploads/book-covers/*
+!wwwroot/uploads/book-covers/.gitkeep
+!wwwroot/uploads/book-covers/demo-*.jpg

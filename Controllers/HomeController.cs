@@ -6,54 +6,36 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BibliotecaAspNet.Controllers;
 
-/// <summary>Página inicial con estadísticas y libros destacados.</summary>
+/// <summary>Página inicial con estadísticas y una pequeña selección del catálogo.</summary>
 public sealed class HomeController : Controller
 {
-    private readonly IBookService books;
-    private readonly IAuthorService authors;
-    private readonly ICategoryService categories;
+    private readonly BookService books;
+    private readonly AuthorService authors;
+    private readonly CategoryService categories;
 
-    /// <summary>Recibe los servicios de catálogo para construir el dashboard.</summary>
-    public HomeController(
-        IBookService books,
-        IAuthorService authors,
-        ICategoryService categories)
+    public HomeController(BookService books, AuthorService authors, CategoryService categories)
     {
         this.books = books;
         this.authors = authors;
         this.categories = categories;
     }
 
-    /// <summary>GET: carga contadores y los primeros libros disponibles.</summary>
-    public async Task<IActionResult> Index(CancellationToken cancellationToken)
+    [HttpGet]
+    public IActionResult Index()
     {
-        var featuredBooks = await books.SearchAsync(
-            search: null,
-            authorId: null,
-            categoryId: null,
-            available: true,
-            favoritesOnly: false,
-            userId: null,
-            cancellationToken);
-
-        var model = new DashboardViewModel
+        var featuredBooks = books.Search(null, null, null, true, false, null).Take(3).ToList();
+        return View(new DashboardViewModel
         {
-            BookCount = await books.CountAsync(cancellationToken),
-            AuthorCount = await authors.CountAsync(cancellationToken),
-            CategoryCount = await categories.CountAsync(cancellationToken),
-            FeaturedBooks = featuredBooks.Take(3).ToList()
-        };
-
-        return View(model);
+            BookCount = books.Count(),
+            AuthorCount = authors.Count(),
+            CategoryCount = categories.Count(),
+            FeaturedBooks = featuredBooks
+        });
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    /// <summary>GET: prepara la vista de error sin guardar datos de la petición.</summary>
-    public IActionResult Error()
+    public IActionResult Error() => View(new ErrorViewModel
     {
-        return View(new ErrorViewModel
-        {
-            RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
-        });
-    }
+        RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
+    });
 }

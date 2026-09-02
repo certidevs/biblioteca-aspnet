@@ -1,84 +1,72 @@
 # Base común para `g1_aspnet`, `g2_aspnet`, …
 
-La aplicación `biblioteca-aspnet` sirve como referencia completa y contiene también
-la base transversal que no debería repetirse en cada grupo.
+`biblioteca-aspnet` es la referencia completa. Cada repositorio de grupo puede empezar
+con la infraestructura de usuarios terminada para que el trabajo se centre en su
+propio dominio.
 
-## Qué se conserva en todos los repositorios
+## Conservar
 
-- `Models/ApplicationUser.cs`: usuario de Identity con nombre visible, estado, fecha de alta y avatar.
-- Configuración de Identity en `Program.cs` y `Data/ApplicationDbContext.cs`.
-- `Controllers/AccountController.cs`: registro, login por usuario/email y logout.
-- `Controllers/ProfileController.cs`: consulta y edición de perfil, avatar y cambio de contraseña.
-- `Controllers/UsersController.cs`: panel de administración de usuarios.
-- `Services/UserService.cs` e `IUserService`: casos de uso de cuenta y administración.
-- `Services/ImageStorage.cs`, `IImageStorage.cs` y `ImageFolder.cs`: almacenamiento común de imágenes.
-- `wwwroot/lib/fontawesome` y el selector `data-bs-theme` del layout: iconos y tema reutilizables.
-- ViewModels y vistas de `Account`, `Profile` y `Users`.
-- Roles `User` y `Admin`, datos de demo y protección antiforgery.
+- `ApplicationUser`, `RoleNames` y la configuración de Identity.
+- `AccountController`, `ProfileController`, `UsersController` y sus vistas/ViewModels.
+- `UserService`, `ImageStorage`, `ImageFolder` y la configuración de subidas.
+- La migración inicial de Identity, los roles `User` y `Admin`, la protección
+  antiforgery, Bootstrap, Font Awesome y el selector de tema.
 
-## Qué añade cada grupo
+No se conserva una capa `Repositories` ni interfaces de servicio: el nuevo proyecto
+puede usar `ApplicationDbContext` y `SaveChanges()` de manera explícita, igual que la
+referencia.
 
-Cada temática tiene sus propias entidades y asociaciones. Cuando una entidad necesita
-saber quién realiza una acción, se relaciona con `ApplicationUser` mediante una FK:
+## Relacionar una entidad con el usuario
+
+Cuando una acción pertenece a una cuenta, añadir una clave externa y la navegación:
 
 ```csharp
-public sealed class Order
+public sealed class Ticket
 {
     public int Id { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    // La FK guarda el propietario de la entrada.
     public string UserId { get; set; } = string.Empty;
     public ApplicationUser User { get; set; } = null!;
 }
 ```
 
-Ejemplos:
+En el controlador, el ID debe salir de la cookie, no del formulario:
 
-| Proyecto | Entidad propia | Relación con usuario |
-| --- | --- | --- |
-| Ecommerce | `Order`, `ProductReview`, `Address` | un usuario hace pedidos, reseñas y guarda direcciones |
-| Cartelera | `Ticket`, `MovieReview` | un usuario compra entradas y escribe reseñas |
-| Restaurantes | `Order`, `Review`, `Favorite` | un usuario pide, reseña y marca favoritos |
-
-La regla pedagógica es que cada alumno complete un slice vertical de su entidad:
-
-```text
-Entidad + validación
-        ↓
-Relación EF Core y migración
-        ↓
-Repositorio con consultas
-        ↓
-Servicio con reglas de negocio
-        ↓
-Controlador MVC
-        ↓
-ViewModel + vistas Razor + UX Bootstrap
+```csharp
+var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+ticket.UserId = userId!;
 ```
 
-## Cómo preparar un repositorio nuevo
+Ejemplos de dominio:
 
-1. Copiar la base de este repositorio en el nuevo repositorio.
-2. Conservar primero Identity, cuenta, perfil, usuarios e imágenes.
-3. Sustituir el dominio de biblioteca (`Book`, `Author`, `Category`, `Review` y los pedidos) por las entidades de la temática.
-4. Mantener `ApplicationUser` y añadir las FKs a usuario en las entidades que lo necesiten.
-5. Revisar `ApplicationDbContext`, eliminar los `DbSet` que ya no correspondan y crear una migración inicial limpia para el nuevo repositorio.
-6. Cambiar el nombre de la base SQLite, la marca visual y los datos de demo.
-7. Crear el primer slice completo antes de añadir la siguiente entidad.
+| Proyecto | Relaciones probables |
+| --- | --- |
+| Ecommerce | Usuario → Pedido, Producto → Reseña, Producto ↔ Categoría |
+| Cartelera | Usuario → Entrada, Película → Reseña, Sesión → Película |
+| Restaurantes | Usuario → Pedido, Restaurante → Plato, Usuario → Reseña |
 
-No se copian `App_Data/*.db` ni imágenes subidas: están excluidos por `.gitignore`.
-Cada repositorio genera su base local aplicando sus propias migraciones.
+## Primer slice vertical
 
-## Contrato común que los alumnos pueden asumir
+1. Crear la entidad con sus validaciones.
+2. Añadir `DbSet` y configurar la relación en `ApplicationDbContext`.
+3. Crear una migración y comprobar que la base se crea.
+4. Crear un ViewModel de formulario.
+5. Crear el controlador MVC y las vistas `Index`, `Details`, `Create`, `Edit` y
+   `Delete`.
+6. Añadir unos datos demo y hacer un commit.
 
-Al empezar su dominio, los alumnos ya pueden dar por disponibles:
+Una clase concreta de ayuda está justificada si encierra una operación completa, por
+ejemplo `CartService` o `ImageStorage`. No crear una interfaz solo para tener una
+interfaz: si solo habrá una implementación, inyectar la clase directamente deja el
+flujo más fácil de seguir.
 
-- `UserId` y `User` para relaciones `N:1`.
-- `User.IsActive` para no permitir acciones a cuentas desactivadas.
-- `User.IsInRole("Admin")` o `[Authorize(Roles = RoleNames.Admin)]` para administración.
-- `IImageStorage` para subir imágenes de productos, películas, restaurantes, platos, etc.
-- Font Awesome para mantener los iconos del proyecto sin emojis y con etiquetas accesibles.
-- `Profile` como lugar donde el usuario gestiona sus datos y avatar.
+## Antes de empezar a codificar
 
-La lógica específica de compra, pedido, entrada o reseña sigue perteneciendo a cada
-proyecto y no se oculta dentro de la base común.
+- Renombrar la solución, namespace, título, base SQLite y marca visual.
+- Eliminar las entidades y migraciones de biblioteca que no correspondan.
+- Crear una migración inicial limpia para el nuevo dominio.
+- Mantener los usuarios demo para que cada equipo pueda probar permisos desde el
+  primer día.
+- No copiar `App_Data/*.db` ni imágenes subidas: cada repositorio genera sus propios
+  datos a partir de migraciones y del inicializador.

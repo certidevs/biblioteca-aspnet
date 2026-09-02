@@ -5,38 +5,29 @@ using Microsoft.Extensions.Options;
 namespace BibliotecaAspNet.Services;
 
 /// <summary>
-/// Almacenamiento local sencillo para el aula.
-///
-/// La base de datos conserva únicamente un nombre generado por la aplicación.
-/// Se valida extensión, tamaño y firma binaria para no confiar solamente en el
-/// Content-Type que envía el navegador.
+/// Almacenamiento local sencillo para el aula. La base de datos guarda solo un nombre
+/// generado por la aplicación; extensión, tamaño y firma se validan antes de escribir.
 /// </summary>
-public sealed class ImageStorage : IImageStorage
+public sealed class ImageStorage
 {
-    private static readonly byte[] PngSignature =
-        [137, 80, 78, 71, 13, 10, 26, 10];
+    private static readonly byte[] PngSignature = [137, 80, 78, 71, 13, 10, 26, 10];
 
     private readonly string webRootPath;
     private readonly ImageStorageOptions options;
     private readonly ILogger<ImageStorage> logger;
 
-    /// <summary>Calcula la raíz pública y carga las opciones de validación.</summary>
     public ImageStorage(
         IWebHostEnvironment environment,
         IOptions<ImageStorageOptions> options,
         ILogger<ImageStorage> logger)
     {
-        webRootPath = environment.WebRootPath
-            ?? Path.Combine(environment.ContentRootPath, "wwwroot");
+        webRootPath = environment.WebRootPath ?? Path.Combine(environment.ContentRootPath, "wwwroot");
         this.options = options.Value;
         this.logger = logger;
     }
 
-    /// <summary>Valida extensión, tamaño y firma antes de guardar con nombre aleatorio.</summary>
-    public async Task<ImageUploadResult> SaveAsync(
-        IFormFile file,
-        ImageFolder folder,
-        CancellationToken cancellationToken = default)
+    /// <summary>Valida y guarda el archivo con nombre aleatorio para no usar el del navegador.</summary>
+    public ImageUploadResult Save(IFormFile file, ImageFolder folder)
     {
         if (file.Length <= 0)
         {
@@ -49,20 +40,19 @@ public sealed class ImageStorage : IImageStorage
             return ImageUploadResult.Failure($"La imagen no puede superar {megabytes:0.#} MB.");
         }
 
-        // El nombre original solo se usa para obtener la extensión, nunca para escribir la ruta.
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
         var allowedExtensions = options.AllowedExtensions
             .Select(value => value.Trim().ToLowerInvariant())
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
         if (!allowedExtensions.Contains(extension))
         {
             return ImageUploadResult.Failure("Solo se permiten imágenes JPG, PNG, GIF o WEBP.");
         }
 
-        await using var input = file.OpenReadStream();
+        // Se revisan los primeros bytes: el Content-Type del navegador no es fiable.
+        using var input = file.OpenReadStream();
         var header = new byte[12];
-        var bytesRead = await ReadHeaderAsync(input, header, cancellationToken);
+        var bytesRead = input.Read(header, 0, header.Length);
         if (!LooksLikeSupportedImage(header, bytesRead, extension))
         {
             return ImageUploadResult.Failure("El contenido del archivo no parece una imagen válida.");
@@ -75,21 +65,9 @@ public sealed class ImageStorage : IImageStorage
 
         try
         {
-            await using var output = new FileStream(
-                path,
-                FileMode.CreateNew,
-                FileAccess.Write,
-                FileShare.None,
-                bufferSize: 64 * 1024,
-                useAsync: true);
-
-            await output.WriteAsync(header.AsMemory(0, bytesRead), cancellationToken);
-            await input.CopyToAsync(output, cancellationToken);
-        }
-        catch (OperationCanceledException)
-        {
-            TryDelete(path);
-            throw;
+            using var output = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+            output.Write(header, 0, bytesRead);
+            input.CopyTo(output);
         }
         catch (IOException exception)
         {
@@ -119,7 +97,7 @@ public sealed class ImageStorage : IImageStorage
         TryDelete(Path.Combine(GetDirectory(folder), safeFileName));
     }
 
-    /// <summary>Devuelve la URL pública segura para una imagen almacenada.</summary>
+    /// <summary>Construye la URL pública de una imagen guardada de forma segura.</summary>
     public string? GetUrl(ImageFolder folder, string? fileName)
     {
         if (string.IsNullOrWhiteSpace(fileName))
@@ -133,51 +111,18 @@ public sealed class ImageStorage : IImageStorage
             return null;
         }
 
-        var folderName = folder switch
-        {
-            ImageFolder.Avatars => "avatars",
-            ImageFolder.BookCovers => "book-covers",
-            ImageFolder.AuthorPhotos => "author-photos",
-            _ => throw new ArgumentOutOfRangeException(nameof(folder))
-        };
-
-        return $"/uploads/{folderName}/{Uri.EscapeDataString(safeFileName)}";
+        return $"/uploads/{GetFolderName(folder)}/{Uri.EscapeDataString(safeFileName)}";
     }
 
-    /// <summary>Mapea el enum de carpeta a un directorio permitido.</summary>
-    private string GetDirectory(ImageFolder folder)
+    private string GetDirectory(ImageFolder folder) => Path.Combine(webRootPath, "uploads", GetFolderName(folder));
+
+    private static string GetFolderName(ImageFolder folder) => folder switch
     {
-        var folderName = folder switch
-        {
-            ImageFolder.Avatars => "avatars",
-            ImageFolder.BookCovers => "book-covers",
-            ImageFolder.AuthorPhotos => "author-photos",
-            _ => throw new ArgumentOutOfRangeException(nameof(folder))
-        };
-
-        return Path.Combine(webRootPath, "uploads", folderName);
-    }
-
-    /// <summary>Lee los primeros bytes necesarios para identificar la imagen.</summary>
-    private static async Task<int> ReadHeaderAsync(
-        Stream input,
-        byte[] header,
-        CancellationToken cancellationToken)
-    {
-        var total = 0;
-        while (total < header.Length)
-        {
-            var read = await input.ReadAsync(header.AsMemory(total), cancellationToken);
-            if (read == 0)
-            {
-                break;
-            }
-
-            total += read;
-        }
-
-        return total;
-    }
+        ImageFolder.Avatars => "avatars",
+        ImageFolder.BookCovers => "book-covers",
+        ImageFolder.AuthorPhotos => "author-photos",
+        _ => throw new ArgumentOutOfRangeException(nameof(folder))
+    };
 
     /// <summary>Comprueba firmas binarias básicas y no solo el Content-Type del navegador.</summary>
     private static bool LooksLikeSupportedImage(byte[] header, int length, string extension)
@@ -194,17 +139,14 @@ public sealed class ImageStorage : IImageStorage
 
         if (extension == ".gif")
         {
-            return length >= 6 &&
-                (Encoding.ASCII.GetString(header, 0, 6) is "GIF87a" or "GIF89a");
+            return length >= 6 && (Encoding.ASCII.GetString(header, 0, 6) is "GIF87a" or "GIF89a");
         }
 
-        return extension == ".webp" &&
-            length >= 12 &&
+        return extension == ".webp" && length >= 12 &&
             Encoding.ASCII.GetString(header, 0, 4) == "RIFF" &&
             Encoding.ASCII.GetString(header, 8, 4) == "WEBP";
     }
 
-    /// <summary>Convierte la extensión validada en el MIME que usará la respuesta HTTP.</summary>
     private static string GetContentType(string extension) => extension switch
     {
         ".jpg" or ".jpeg" => "image/jpeg",
@@ -214,7 +156,6 @@ public sealed class ImageStorage : IImageStorage
         _ => "application/octet-stream"
     };
 
-    /// <summary>Intenta limpiar un archivo sin ocultar el resultado principal de la operación.</summary>
     private void TryDelete(string path)
     {
         try

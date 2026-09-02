@@ -11,19 +11,19 @@ namespace BibliotecaAspNet.Services;
 /// Casos de uso comunes de usuarios. Este servicio es una de las piezas que se
 /// puede reutilizar al arrancar cualquiera de los proyectos de grupos.
 /// </summary>
-public sealed class UserService : IUserService
+public sealed class UserService
 {
     private readonly ApplicationDbContext context;
     private readonly UserManager<ApplicationUser> userManager;
     private readonly RoleManager<IdentityRole> roleManager;
-    private readonly IImageStorage images;
+    private readonly ImageStorage images;
 
     /// <summary>Recibe Identity, EF Core y almacenamiento de imágenes por DI.</summary>
     public UserService(
         ApplicationDbContext context,
         UserManager<ApplicationUser> userManager,
         RoleManager<IdentityRole> roleManager,
-        IImageStorage images)
+        ImageStorage images)
     {
         this.context = context;
         this.userManager = userManager;
@@ -32,9 +32,7 @@ public sealed class UserService : IUserService
     }
 
     /// <summary>Busca usuarios y añade a cada fila su rol principal.</summary>
-    public async Task<List<UserListItemViewModel>> SearchAsync(
-        string? search,
-        CancellationToken cancellationToken = default)
+    public async Task<List<UserListItemViewModel>> SearchAsync(string? search)
     {
         var query = context.Users.AsNoTracking().AsQueryable();
         // La búsqueda se traduce a SQL y no carga todos los usuarios antes de filtrar.
@@ -47,7 +45,7 @@ public sealed class UserService : IUserService
                 (user.DisplayName != null && EF.Functions.Like(user.DisplayName, $"%{value}%")));
         }
 
-        var users = await query.OrderBy(user => user.UserName).ToListAsync(cancellationToken);
+        var users = query.OrderBy(user => user.UserName).ToList();
         var result = new List<UserListItemViewModel>();
         foreach (var user in users)
         {
@@ -63,11 +61,9 @@ public sealed class UserService : IUserService
     }
 
     /// <summary>Carga el perfil y todas las relaciones que se muestran en su resumen.</summary>
-    public async Task<ProfileViewModel?> GetProfileAsync(
-        string userId,
-        CancellationToken cancellationToken = default)
+    public ProfileViewModel? GetProfile(string userId)
     {
-        var user = await context.Users
+        var user = context.Users
             .AsNoTracking()
             .Include(item => item.FavoriteBooks)
             .Include(item => item.Reviews)
@@ -76,7 +72,7 @@ public sealed class UserService : IUserService
             .ThenInclude(order => order.Items)
             .ThenInclude(orderItem => orderItem.Book)
             .AsSplitQuery()
-            .SingleOrDefaultAsync(item => item.Id == userId, cancellationToken);
+            .SingleOrDefault(item => item.Id == userId);
 
         if (user is null)
         {
@@ -96,13 +92,11 @@ public sealed class UserService : IUserService
     }
 
     /// <summary>Proyecta un usuario a un modelo seguro para editar datos y avatar.</summary>
-    public async Task<ProfileEditViewModel?> GetProfileEditModelAsync(
-        string userId,
-        CancellationToken cancellationToken = default)
+    public ProfileEditViewModel? GetProfileEditModel(string userId)
     {
-        var user = await context.Users
+        var user = context.Users
             .AsNoTracking()
-            .SingleOrDefaultAsync(item => item.Id == userId, cancellationToken);
+            .SingleOrDefault(item => item.Id == userId);
         if (user is null)
         {
             return null;
@@ -117,10 +111,8 @@ public sealed class UserService : IUserService
     }
 
     /// <summary>Actualiza datos personales y sustituye o elimina el avatar si procede.</summary>
-    public async Task<IdentityResult> UpdateProfileAsync(
-        string userId,
-        ProfileEditViewModel model,
-        CancellationToken cancellationToken = default)
+    /// <remarks>Identity expone estas operaciones de cuenta de forma asíncrona.</remarks>
+    public async Task<IdentityResult> UpdateProfileAsync(string userId, ProfileEditViewModel model)
     {
         var user = await userManager.FindByIdAsync(userId);
         if (user is null)
@@ -139,10 +131,7 @@ public sealed class UserService : IUserService
         string? newAvatarFileName = null;
         if (model.Avatar is not null)
         {
-            var upload = await images.SaveAsync(
-                model.Avatar,
-                ImageFolder.Avatars,
-                cancellationToken);
+            var upload = images.Save(model.Avatar, ImageFolder.Avatars);
             if (!upload.Succeeded)
             {
                 return Failure(upload.Error!);
@@ -173,10 +162,7 @@ public sealed class UserService : IUserService
     }
 
     /// <summary>Cambia la contraseña usando la verificación interna de Identity.</summary>
-    public async Task<IdentityResult> ChangePasswordAsync(
-        string userId,
-        ChangePasswordViewModel model,
-        CancellationToken cancellationToken = default)
+    public async Task<IdentityResult> ChangePasswordAsync(string userId, ChangePasswordViewModel model)
     {
         var user = await userManager.FindByIdAsync(userId);
         if (user is null)
@@ -191,13 +177,11 @@ public sealed class UserService : IUserService
     }
 
     /// <summary>Proyecta un usuario al formulario usado por un administrador.</summary>
-    public async Task<EditUserViewModel?> GetEditModelAsync(
-        string id,
-        CancellationToken cancellationToken = default)
+    public async Task<EditUserViewModel?> GetEditModelAsync(string id)
     {
-        var user = await context.Users
+        var user = context.Users
             .AsNoTracking()
-            .SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
+            .SingleOrDefault(item => item.Id == id);
         if (user is null)
         {
             return null;
@@ -216,10 +200,7 @@ public sealed class UserService : IUserService
     }
 
     /// <summary>Actualiza una cuenta y protege las reglas del último administrador.</summary>
-    public async Task<IdentityResult> UpdateAsync(
-        EditUserViewModel model,
-        string currentAdminId,
-        CancellationToken cancellationToken = default)
+    public async Task<IdentityResult> UpdateAsync(EditUserViewModel model, string currentAdminId)
     {
         if (!await roleManager.RoleExistsAsync(model.Role))
         {
@@ -278,9 +259,7 @@ public sealed class UserService : IUserService
     }
 
     /// <summary>Crea una cuenta, asigna rol y guarda su avatar opcional.</summary>
-    public async Task<IdentityResult> CreateAsync(
-        CreateUserViewModel model,
-        CancellationToken cancellationToken = default)
+    public async Task<IdentityResult> CreateAsync(CreateUserViewModel model)
     {
         if (!await roleManager.RoleExistsAsync(model.Role))
         {
@@ -312,10 +291,7 @@ public sealed class UserService : IUserService
 
         if (model.Avatar is not null)
         {
-            var upload = await images.SaveAsync(
-                model.Avatar,
-                ImageFolder.Avatars,
-                cancellationToken);
+            var upload = images.Save(model.Avatar, ImageFolder.Avatars);
             if (!upload.Succeeded)
             {
                 await userManager.DeleteAsync(user);
@@ -336,10 +312,7 @@ public sealed class UserService : IUserService
     }
 
     /// <summary>Elimina una cuenta sin permitir borrar la propia ni el último admin.</summary>
-    public async Task<IdentityResult> DeleteAsync(
-        string id,
-        string currentAdminId,
-        CancellationToken cancellationToken = default)
+    public async Task<IdentityResult> DeleteAsync(string id, string currentAdminId)
     {
         if (id == currentAdminId)
         {

@@ -1,84 +1,93 @@
+using BibliotecaAspNet.Data;
 using BibliotecaAspNet.Models;
-using BibliotecaAspNet.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace BibliotecaAspNet.Services;
 
-/// <summary>Orquesta las operaciones de categorías y su regla de nombre único.</summary>
-public sealed class CategoryService : ICategoryService
+/// <summary>Operaciones de categorías con la regla de nombre único.</summary>
+public sealed class CategoryService
 {
-    private readonly ICategoryRepository categories;
+    private readonly ApplicationDbContext context;
 
-    /// <summary>Recibe el repositorio mediante inyección de dependencias.</summary>
-    public CategoryService(ICategoryRepository categories)
+    public CategoryService(ApplicationDbContext context)
     {
-        this.categories = categories;
+        this.context = context;
     }
 
-    /// <summary>Delega la búsqueda al repositorio.</summary>
-    public Task<List<Category>> SearchAsync(string? search, CancellationToken cancellationToken = default)
+    /// <summary>Busca por nombre o descripción y carga el contador de libros.</summary>
+    public List<Category> Search(string? search)
     {
-        return categories.SearchAsync(search, cancellationToken);
-    }
-
-    /// <summary>Obtiene el detalle de una categoría.</summary>
-    public Task<Category?> GetDetailsAsync(int id, CancellationToken cancellationToken = default)
-    {
-        return categories.GetDetailsAsync(id, cancellationToken);
-    }
-
-    /// <summary>Comprueba duplicados antes de insertar la categoría.</summary>
-    public async Task CreateAsync(Category category, CancellationToken cancellationToken = default)
-    {
-        if (await categories.ExistsByNameAsync(category.Name, cancellationToken: cancellationToken))
+        var query = context.Categories.AsNoTracking().Include(category => category.Books).AsQueryable();
+        if (!string.IsNullOrWhiteSpace(search))
         {
-            throw new InvalidOperationException("Ya existe una categoría con ese nombre.");
+            var value = search.Trim();
+            query = query.Where(category =>
+                EF.Functions.Like(category.Name, $"%{value}%") ||
+                (category.Description != null && EF.Functions.Like(category.Description, $"%{value}%")));
         }
 
-        await categories.AddAsync(category, cancellationToken);
-        await categories.SaveChangesAsync(cancellationToken);
+        return query.OrderBy(category => category.Name).ToList();
     }
 
-    /// <summary>Actualiza la categoría y conserva la restricción de nombre único.</summary>
-    public async Task<bool> UpdateAsync(
-        int id,
-        Category category,
-        CancellationToken cancellationToken = default)
+    /// <summary>Carga la categoría con los libros y autores de su detalle.</summary>
+    public Category? GetDetails(int id) => context.Categories
+        .AsNoTracking()
+        .Include(category => category.Books)
+        .ThenInclude(book => book.Author)
+        .SingleOrDefault(category => category.Id == id);
+
+    /// <summary>Inserta una categoría solo si no existe ese nombre.</summary>
+    public void Create(Category category)
     {
-        var existing = await categories.GetByIdAsync(id, cancellationToken);
+        EnsureUniqueName(category.Name);
+        context.Categories.Add(category);
+        context.SaveChanges();
+    }
+
+    /// <summary>Actualiza la categoría y vuelve a comprobar su nombre único.</summary>
+    public bool Update(int id, Category category)
+    {
+        var existing = context.Categories.Find(id);
         if (existing is null)
         {
             return false;
         }
 
-        if (await categories.ExistsByNameAsync(category.Name, id, cancellationToken))
-        {
-            throw new InvalidOperationException("Ya existe otra categoría con ese nombre.");
-        }
-
+        EnsureUniqueName(category.Name, id);
         existing.Name = category.Name;
         existing.Description = category.Description;
         existing.Color = category.Color;
-        await categories.SaveChangesAsync(cancellationToken);
+        context.SaveChanges();
         return true;
     }
 
     /// <summary>Elimina la categoría si existe.</summary>
-    public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
+    public bool Delete(int id)
     {
-        var category = await categories.GetByIdAsync(id, cancellationToken);
+        var category = context.Categories.Find(id);
         if (category is null)
         {
             return false;
         }
 
-        categories.Delete(category);
-        await categories.SaveChangesAsync(cancellationToken);
+        context.Categories.Remove(category);
+        context.SaveChanges();
         return true;
     }
 
-    /// <summary>Devuelve el total de categorías.</summary>
-    public Task<int> CountAsync(CancellationToken cancellationToken = default)
+    /// <summary>Cuenta categorías para el panel inicial.</summary>
+    public int Count() => context.Categories.Count();
+
+    /// <summary>Centraliza la regla de negocio sin crear una capa de repositorio.</summary>
+    private void EnsureUniqueName(string name, int? excludingId = null)
     {
-        return categories.CountAsync(cancellationToken);
+        var normalizedName = name.Trim().ToLower();
+        var exists = context.Categories.Any(category =>
+            category.Name.ToLower() == normalizedName &&
+            (!excludingId.HasValue || category.Id != excludingId.Value));
+        if (exists)
+        {
+            throw new InvalidOperationException("Ya existe una categoría con ese nombre.");
+        }
     }
 }

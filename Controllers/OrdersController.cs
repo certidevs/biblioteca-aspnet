@@ -1,26 +1,24 @@
+using System.Security.Claims;
 using BibliotecaAspNet.Models;
 using BibliotecaAspNet.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace BibliotecaAspNet.Controllers;
 
 [Authorize]
-/// <summary>Consulta del histórico de pedidos del usuario o del administrador.</summary>
+/// <summary>Histórico de pedidos propio o global cuando lo consulta un administrador.</summary>
 public sealed class OrdersController : Controller
 {
-    private readonly IOrderService orders;
+    private readonly OrderService orders;
 
-    /// <summary>Recibe el servicio de pedidos.</summary>
-    public OrdersController(IOrderService orders)
+    public OrdersController(OrderService orders)
     {
         this.orders = orders;
     }
 
     [HttpGet]
-    /// <summary>GET: muestra pedidos propios o todos si el usuario es administrador.</summary>
-    public async Task<IActionResult> Index(CancellationToken cancellationToken)
+    public IActionResult Index()
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (userId is null)
@@ -28,16 +26,13 @@ public sealed class OrdersController : Controller
             return Challenge();
         }
 
-        var model = User.IsInRole(RoleNames.Admin)
-            ? await orders.GetAllAsync(cancellationToken)
-            : await orders.GetForUserAsync(userId, cancellationToken);
-        ViewData["IsAdminView"] = User.IsInRole(RoleNames.Admin);
-        return View(model);
+        var isAdmin = User.IsInRole(RoleNames.Admin);
+        ViewData["IsAdminView"] = isAdmin;
+        return View(isAdmin ? orders.GetAll() : orders.GetForUser(userId));
     }
 
     [HttpGet]
-    /// <summary>GET: muestra un pedido si pertenece al usuario o es administrador.</summary>
-    public async Task<IActionResult> Details(int id, CancellationToken cancellationToken)
+    public IActionResult Details(int id)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (userId is null)
@@ -45,11 +40,7 @@ public sealed class OrdersController : Controller
             return Challenge();
         }
 
-        var order = await orders.GetDetailsAsync(
-            id,
-            userId,
-            User.IsInRole(RoleNames.Admin),
-            cancellationToken);
+        var order = orders.GetDetails(id, userId, User.IsInRole(RoleNames.Admin));
         return order is null ? NotFound() : View(order);
     }
 }

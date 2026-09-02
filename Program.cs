@@ -1,6 +1,5 @@
 using BibliotecaAspNet.Data;
 using BibliotecaAspNet.Models;
-using BibliotecaAspNet.Repositories;
 using BibliotecaAspNet.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -74,22 +73,15 @@ builder.Services.AddControllersWithViews(options =>
     options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
 });
 
-// Repositorios: la capa equivalente a Spring Data JPA.
-builder.Services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
-builder.Services.AddScoped<IAuthorRepository, AuthorRepository>();
-builder.Services.AddScoped<IBookRepository, BookRepository>();
-builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
-builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
-builder.Services.AddScoped<IOrderRepository, OrderRepository>();
-
-// Servicios: lógica de negocio entre controladores y persistencia.
-builder.Services.AddScoped<IBookService, BookService>();
-builder.Services.AddScoped<IAuthorService, AuthorService>();
-builder.Services.AddScoped<ICategoryService, CategoryService>();
-builder.Services.AddScoped<IReviewService, ReviewService>();
-builder.Services.AddScoped<ICartService, CartService>();
-builder.Services.AddScoped<IOrderService, OrderService>();
-builder.Services.AddScoped<IUserService, UserService>();
+// EF Core ya actúa como repositorio y unidad de trabajo. Se inyectan clases concretas
+// solo donde hay una regla útil (carrito, imágenes, checkout o Identity), sin interfaces duplicadas.
+builder.Services.AddScoped<BookService>();
+builder.Services.AddScoped<AuthorService>();
+builder.Services.AddScoped<CategoryService>();
+builder.Services.AddScoped<ReviewService>();
+builder.Services.AddScoped<CartService>();
+builder.Services.AddScoped<OrderService>();
+builder.Services.AddScoped<UserService>();
 builder.Services.Configure<ImageStorageOptions>(
     builder.Configuration.GetSection("FileUploads:Images"));
 var maxImageSize = builder.Configuration.GetValue(
@@ -100,7 +92,7 @@ builder.Services.Configure<FormOptions>(options =>
     // Deja un pequeño margen para el multipart alrededor del archivo.
     options.MultipartBodyLengthLimit = maxImageSize + (512 * 1024);
 });
-builder.Services.AddSingleton<IImageStorage, ImageStorage>();
+builder.Services.AddSingleton<ImageStorage>();
 
 var app = builder.Build();
 
@@ -124,10 +116,11 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 // En desarrollo se aplican las migraciones y se cargan datos de demo automáticamente.
+// La inicialización usa async solo porque las APIs de roles y contraseñas de Identity lo exigen.
 var appDataDirectory = Path.Combine(app.Environment.ContentRootPath, "App_Data");
 Directory.CreateDirectory(appDataDirectory);
 
-await using (var scope = app.Services.CreateAsyncScope())
+using (var scope = app.Services.CreateScope())
 {
     await DbInitializer.InitializeAsync(scope.ServiceProvider);
 }

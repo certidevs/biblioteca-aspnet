@@ -1,59 +1,47 @@
+using System.Security.Claims;
 using BibliotecaAspNet.Models;
 using BibliotecaAspNet.Services;
 using BibliotecaAspNet.ViewModels.Reviews;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace BibliotecaAspNet.Controllers;
 
 /// <summary>Listado público y escritura moderada de reseñas.</summary>
 public sealed class ReviewsController : Controller
 {
-    private readonly IReviewService reviews;
-    private readonly IBookService books;
+    private readonly ReviewService reviews;
+    private readonly BookService books;
 
-    /// <summary>Recibe servicios de reseñas y libros.</summary>
-    public ReviewsController(IReviewService reviews, IBookService books)
+    public ReviewsController(ReviewService reviews, BookService books)
     {
         this.reviews = reviews;
         this.books = books;
     }
 
     [HttpGet]
-    /// <summary>GET: lista reseñas con filtro opcional de puntuación.</summary>
-    public async Task<IActionResult> Index(int? rating, CancellationToken cancellationToken)
+    public IActionResult Index(int? rating)
     {
         ViewData["Rating"] = rating;
-        return View(await reviews.SearchAsync(rating, cancellationToken));
+        return View(reviews.Search(rating));
     }
 
     [Authorize]
     [HttpGet]
-    /// <summary>GET autenticado: muestra el formulario para un libro concreto.</summary>
-    public async Task<IActionResult> Create(int bookId, CancellationToken cancellationToken)
+    public IActionResult Create(int bookId)
     {
-        var book = await books.GetDetailsAsync(bookId, cancellationToken);
-        if (book is null)
-        {
-            return NotFound();
-        }
-
-        return View(new ReviewFormViewModel
-        {
-            BookId = book.Id,
-            BookTitle = book.Title
-        });
+        var book = books.GetDetails(bookId);
+        return book is null
+            ? NotFound()
+            : View(new ReviewFormViewModel { BookId = book.Id, BookTitle = book.Title });
     }
 
     [Authorize]
     [HttpPost]
-    /// <summary>POST autenticado: crea la reseña usando el usuario de la cookie.</summary>
-    public async Task<IActionResult> Create(
-        ReviewFormViewModel model,
-        CancellationToken cancellationToken)
+    /// <summary>POST: toma UserId de la cookie, no del formulario.</summary>
+    public IActionResult Create(ReviewFormViewModel model)
     {
-        var book = await books.GetDetailsAsync(model.BookId, cancellationToken);
+        var book = books.GetDetails(model.BookId);
         if (book is null)
         {
             return NotFound();
@@ -73,28 +61,23 @@ public sealed class ReviewsController : Controller
 
         try
         {
-            await reviews.CreateAsync(new Review
-            {
-                BookId = model.BookId,
-                Comment = model.Comment,
-                Rating = model.Rating
-            }, userId, cancellationToken);
-            TempData["Message"] = "Reseña publicada correctamente.";
-            return RedirectToAction("Details", "Books", new { id = model.BookId });
+            reviews.Create(new Review { BookId = model.BookId, Comment = model.Comment, Rating = model.Rating }, userId);
         }
         catch (InvalidOperationException exception)
         {
             ModelState.AddModelError(string.Empty, exception.Message);
             return View(model);
         }
+
+        TempData["Message"] = "Reseña publicada correctamente.";
+        return RedirectToAction("Details", "Books", new { id = model.BookId });
     }
 
     [Authorize]
     [HttpGet]
-    /// <summary>GET autenticado: carga una reseña si el usuario puede modificarla.</summary>
-    public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken)
+    public IActionResult Edit(int id)
     {
-        var review = await reviews.GetByIdAsync(id, cancellationToken);
+        var review = reviews.GetById(id);
         if (review is null)
         {
             return NotFound();
@@ -118,18 +101,14 @@ public sealed class ReviewsController : Controller
 
     [Authorize]
     [HttpPost]
-    /// <summary>POST autenticado: actualiza comentario y puntuación.</summary>
-    public async Task<IActionResult> Edit(
-        int id,
-        ReviewFormViewModel model,
-        CancellationToken cancellationToken)
+    public IActionResult Edit(int id, ReviewFormViewModel model)
     {
         if (id != model.Id)
         {
             return BadRequest();
         }
 
-        var book = await books.GetDetailsAsync(model.BookId, cancellationToken);
+        var book = books.GetDetails(model.BookId);
         if (book is null)
         {
             return NotFound();
@@ -147,12 +126,11 @@ public sealed class ReviewsController : Controller
             return Challenge();
         }
 
-        var updated = await reviews.UpdateAsync(
+        var updated = reviews.Update(
             id,
             new Review { Comment = model.Comment, Rating = model.Rating },
             userId,
-            User.IsInRole(RoleNames.Admin),
-            cancellationToken);
+            User.IsInRole(RoleNames.Admin));
         if (!updated)
         {
             return Forbid();
@@ -164,8 +142,7 @@ public sealed class ReviewsController : Controller
 
     [Authorize]
     [HttpPost]
-    /// <summary>POST autenticado: elimina una reseña propia o moderada por un admin.</summary>
-    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
+    public IActionResult Delete(int id)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (userId is null)
@@ -173,10 +150,8 @@ public sealed class ReviewsController : Controller
             return Challenge();
         }
 
-        var review = await reviews.GetByIdAsync(id, cancellationToken);
-        var bookId = review?.BookId;
-        var deleted = await reviews.DeleteAsync(id, userId, User.IsInRole(RoleNames.Admin), cancellationToken);
-        if (!deleted)
+        var bookId = reviews.GetById(id)?.BookId;
+        if (!reviews.Delete(id, userId, User.IsInRole(RoleNames.Admin)))
         {
             return Forbid();
         }

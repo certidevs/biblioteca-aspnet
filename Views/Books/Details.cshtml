@@ -1,5 +1,5 @@
 @model Book
-@inject IImageStorage ImageStorage
+@inject ImageStorage ImageStorage
 @{
     ViewData["Title"] = Model.Title;
     var currentUrl = $"{Context.Request.Path}{Context.Request.QueryString}";

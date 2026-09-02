@@ -1,144 +1,115 @@
 # Biblioteca ASP.NET
 
-Aplicación web de referencia del curso, equivalente a
-[proyecto_biblioteca](https://github.com/alansastre/proyecto_biblioteca), implementada con
-C# y ASP.NET Core MVC.
+Proyecto de referencia del curso, equivalente a
+[proyecto_biblioteca](https://github.com/alansastre/proyecto_biblioteca), implementado
+con C# y ASP.NET Core MVC. Está pensado para que se pueda leer desde cero y reutilizar
+como base de los proyectos de grupo.
 
 ## Stack
 
-- .NET 10 LTS / C# 14.
-- ASP.NET Core MVC con controladores y vistas Razor (`.cshtml`).
-- Entity Framework Core 10 con SQLite.
-- ASP.NET Core Identity con autenticación por cookies y roles.
-- Bootstrap 5.3.8 servido desde `wwwroot/lib`, usando sus componentes y utilidades con una capa CSS propia mínima y responsive.
-- Font Awesome Free 7.3.1 servido localmente desde `wwwroot/lib/fontawesome` para iconos accesibles y reutilizables.
-- Modo claro/oscuro con `data-bs-theme` de Bootstrap y un selector persistido en el navegador.
-- Subida local de avatares, fotografías de autores y portadas con validación de tamaño, extensión y firma del archivo.
-- Migraciones EF Core y datos de demo idempotentes.
-- Sin tests automáticos, según el alcance docente solicitado.
+- .NET 10 LTS y C# 14.
+- ASP.NET Core MVC: controladores y vistas Razor (`.cshtml`).
+- Entity Framework Core 10 + SQLite, equivalente práctico de JPA/Hibernate + H2.
+- ASP.NET Core Identity: registro, login por cookie, roles y contraseñas.
+- Bootstrap 5.3, Font Awesome 7 y modo claro/oscuro.
+- Docker para explicar el empaquetado y un despliegue demostrativo en Render.
 
-SQLite ocupa aquí el lugar práctico de H2: es una base de datos relacional embebida,
-multiplataforma y no requiere instalar un servidor. En desarrollo se guarda en
-`App_Data/biblioteca.db`; el esquema se recrea en cualquier equipo aplicando las
-migraciones versionadas.
+SQLite se guarda localmente en `App_Data/biblioteca.db`; no requiere instalar un
+servidor de base de datos. Las migraciones crean el esquema y el inicializador aporta
+datos demo al primer arranque.
 
-## Funcionalidades
+## Funcionalidades incluidas
 
-- Dashboard inicial con estadísticas.
-- Listado de libros con búsqueda por texto, autor, categoría, disponibilidad y favoritos.
-- Ficha de libro con autor, categorías, sinopsis y reseñas.
-- Portadas de ejemplo para el catálogo y fotografías de ejemplo para los autores.
-- CRUD de libros, autores y categorías, protegido para administradores.
-- Registro, login por usuario o email, logout, bloqueo temporal tras intentos fallidos y roles `User` y `Admin`.
-- Perfil editable: nombre visible, email, avatar y cambio de contraseña.
-- Administración completa de usuarios: listar, buscar, consultar actividad, crear, editar, activar/desactivar, cambiar rol, restablecer contraseña y eliminar.
-- Reglas de seguridad para no eliminar el propio admin ni el último administrador.
-- Favoritos y carrito de compra para usuarios autenticados: añadir, quitar, cambiar cantidades y vaciar.
-- Checkout ficticio con tarjeta de prueba, validación de servidor y creación de pedidos con varias líneas.
-- Historial de pedidos del usuario y consulta global para administradores.
-- Reseñas de 1 a 5 estrellas; cada usuario puede modificar o borrar sus reseñas y el admin puede moderarlas.
-- Perfil con favoritos, pedidos, reseñas y total gastado.
-- Portadas de libros gestionadas desde el formulario de alta/edición.
-- Protección antiforgery automática para formularios POST.
+- CRUD de libros, autores y categorías para el rol administrador.
+- Búsquedas, filtros, favoritos y reseñas.
+- Registro, login, logout, perfil, avatar y cambio de contraseña.
+- Administración de usuarios: alta, edición, rol, estado y borrado seguro.
+- Carrito con cantidades, checkout ficticio y pedidos históricos.
+- Portadas de libros y fotos de autores; subida de imágenes validada.
+- Datos demo: seis libros, autores, categorías, reseñas y un pedido.
 
-Las imágenes subidas por usuarios se guardan fuera de Git en `wwwroot/uploads/avatars`,
-`wwwroot/uploads/author-photos` y `wwwroot/uploads/book-covers`. Las imágenes demo del
-catálogo se versionan para que el proyecto no aparezca vacío al clonarlo. La base de
-datos solo almacena un nombre generado por la aplicación, no la ruta ni el nombre
-original del archivo.
+## Ejecutar
 
-Las fotografías y portadas demo están generadas para este proyecto de referencia y no
-pretenden sustituir fotografías de archivo ni portadas oficiales de editoriales. En un
-proyecto real se podrían reemplazar desde los formularios de administración respetando
-el mismo flujo de `IFormFile` + `IImageStorage`.
+Desde esta carpeta:
 
-La explicación guiada de las asociaciones, el flujo de una petición y el checklist
-para añadir una entidad está en [`docs/GUÍA-CÓDIGO.md`](docs/GUÍA-CÓDIGO.md).
+```bash
+dotnet run
+```
 
-## Base común para los proyectos de grupos
+Abrir la URL que muestra la consola (normalmente `http://localhost:5085`).
 
-La parte de usuarios está pensada como infraestructura transversal. Al crear un
-proyecto nuevo se conserva el bloque de Identity, cuenta, perfil, gestión de usuarios
-e `IImageStorage`; cada equipo añade sus entidades y relaciones apuntando a
-`ApplicationUser`:
+Usuarios de demo:
+
+- `admin` / `Admin123!`
+- `user` / `User123!`
+
+Tarjeta de checkout ficticia: `4242 4242 4242 4242`, caducidad `12/30`, CVV `123`.
+
+## Arquitectura elegida para el curso
+
+```text
+Navegador → Controller → servicio concreto solo si aporta una regla → DbContext → SQLite
+                   ↓
+              ViewModel → Razor + Bootstrap
+```
+
+`ApplicationDbContext` ya es la unidad de trabajo y el repositorio de EF Core. Por
+eso **no hay carpeta `Repositories/` ni interfaces `I...Service`**: una interfaz solo
+tiene sentido si existen varias implementaciones o si el proyecto necesita desacoplar
+un módulo de verdad. Para este MVP docente serían ficheros y saltos de lectura sin
+valor.
+
+Los servicios concretos son pequeños y solo se conservan cuando aclaran una operación
+que no pertenece a una acción HTTP sencilla:
+
+- `BookService`, `AuthorService`, `CategoryService` y `ReviewService`: consultas y
+  reglas de su dominio usando EF Core de forma visible.
+- `CartService`: conserva IDs y cantidades en sesión, nunca precios.
+- `OrderService`: vuelve a validar el carrito y crea `Order` + `OrderItem`.
+- `ImageStorage`: valida y guarda archivos locales.
+- `UserService`: agrupa las operaciones de usuarios de Identity que se reutilizarán
+  en los proyectos de grupo.
+
+El CRUD habitual usa métodos síncronos y `SaveChanges()`. Solo las operaciones de
+Identity conservan `async`/`await`, porque `UserManager`, `RoleManager` y
+`SignInManager` solo ofrecen su API de contraseñas, roles y cookies de esa manera. No
+se usan `CancellationToken`, concurrencia ni patrones asíncronos en el dominio.
+
+## Carpetas importantes
+
+```text
+Controllers/    # Rutas HTTP, ModelState y selección de vista
+Data/           # DbContext, migraciones y datos demo
+Models/         # Entidades y asociaciones EF Core
+Services/       # Ayudas concretas que aportan una regla real
+ViewModels/     # DTOs de formularios y de cada pantalla
+Views/          # Razor, Bootstrap y layout común
+wwwroot/        # CSS, JS, Bootstrap, Font Awesome e imágenes
+Utilities/      # Funciones puras como ISBN o precios
+docs/           # Guías de código, base de grupos y despliegue
+```
+
+Un `ViewModel` es el equivalente más cercano a un DTO de Spring Boot. Por ejemplo,
+`BookFormViewModel` contiene `IFormFile` e IDs de categorías que existen solo en el
+formulario; `Book` conserva las relaciones reales que se persisten.
+
+## Base común de los grupos
+
+Se pueden conservar `ApplicationUser`, Identity, cuenta, perfil, usuarios,
+`ImageStorage` y las vistas asociadas. Cuando una entidad pertenece a una cuenta,
+añade esta relación:
 
 ```csharp
 public string UserId { get; set; } = string.Empty;
 public ApplicationUser User { get; set; } = null!;
 ```
 
-Así, una compra, una entrada de cine, un pedido o una reseña puede pertenecer a un
-usuario sin que el grupo tenga que volver a implementar registro, login, roles,
-avatares o el panel de administración. La guía de extracción está en
-[`docs/BASE-COMUN-GRUPOS.md`](docs/BASE-COMUN-GRUPOS.md).
+Cada equipo añade después su entidad (`Product`, `Movie`, `Ticket`, `Dish`…) como un
+slice vertical: modelo, relación y migración, ViewModel, controlador, vistas y datos
+demo. La base de usuarios queda resuelta desde el primer commit.
 
-## Ejecutar
+## Guías
 
-Desde la raíz de este repositorio:
-
-```bash
-dotnet run
-```
-
-Al arrancar, `Program.cs` llama a `DbInitializer`, que aplica migraciones y siembra los
-datos de ejemplo solo cuando el catálogo está vacío.
-
-Usuarios incluidos:
-
-- `admin` / `Admin123!`
-- `user` / `User123!`
-
-Tarjeta de prueba para el checkout:
-
-- Número: `4242 4242 4242 4242`
-- Caducidad: `12/30`
-- CVV: `123`
-
-## Estructura
-
-```text
-Controllers/    # Equivalente a @Controller y manejo de rutas HTTP
-Data/            # ApplicationDbContext, relaciones ORM y DbInitializer
-Models/          # Author, Book, Category, Review, Order, OrderItem y ApplicationUser
-Repositories/    # IRepository + consultas específicas con EF Core/LINQ
-Services/        # Casos de uso y reglas de negocio
-ViewModels/      # DTOs de formularios y páginas
-Views/           # Razor Views y layout común Bootstrap
-wwwroot/lib/     # Bootstrap y Font Awesome servidos localmente
-wwwroot/uploads/ # Imágenes demo versionadas y archivos subidos ignorados
-Utilities/       # Lógica pura reutilizable: ISBN, estadísticas y precios
-Data/Migrations/ # Historial versionado del esquema
-docs/           # Guías docentes del modelo y del flujo de una petición
-```
-
-Piezas concretas de la base común:
-
-```text
-Models/ApplicationUser.cs
-Controllers/AccountController.cs
-Controllers/ProfileController.cs
-Controllers/UsersController.cs
-Services/UserService.cs
-Services/ImageStorage.cs
-ViewModels/Profile/
-ViewModels/Users/
-Views/Account/
-Views/Profile/
-Views/Users/
-```
-
-## Equivalencias que se pueden señalar en clase
-
-```text
-Controller → Service → Repository → ApplicationDbContext → SQLite
-     ↓             ↓            ↓
-  Razor       reglas       consultas LINQ
-```
-
-- `ApplicationDbContext` es el contexto de EF Core y configura relaciones con `OnModelCreating`.
-- `IRepository<TEntity>` muestra el CRUD común que Spring Data ofrece mediante `JpaRepository`.
-- Las interfaces específicas contienen consultas equivalentes a derived queries y `@Query`.
-- `CartService` guarda temporalmente las cantidades en la sesión y `OrderService` las valida de nuevo y las persiste como `Order` + `OrderItem`.
-- Identity sustituye a Spring Security: `[Authorize]` protege acciones y
-  `[Authorize(Roles = RoleNames.Admin)]` restringe operaciones de administración.
-- `BookFormViewModel` y los demás ViewModels evitan enlazar directamente entidades complejas desde formularios.
+- [Cómo leer el código y las asociaciones](docs/GUÍA-CÓDIGO.md)
+- [Qué conservar al crear el repositorio de un grupo](docs/BASE-COMUN-GRUPOS.md)
+- [Docker y despliegue de demostración en Render](docs/DESPLIEGUE-RENDER.md)

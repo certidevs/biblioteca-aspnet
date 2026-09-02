@@ -1,5 +1,5 @@
 @model Order
-@inject IImageStorage ImageStorage
+@inject ImageStorage ImageStorage
 @{
     ViewData["Title"] = $"Pedido #{Model.Id}";
     var canSeeUser = User.IsInRole(RoleNames.Admin) && Model.User is not null;

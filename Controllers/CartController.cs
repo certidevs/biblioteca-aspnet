@@ -1,8 +1,8 @@
+using System.Security.Claims;
 using BibliotecaAspNet.Services;
 using BibliotecaAspNet.ViewModels.Cart;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace BibliotecaAspNet.Controllers;
 
@@ -10,47 +10,30 @@ namespace BibliotecaAspNet.Controllers;
 /// <summary>Carrito temporal y checkout de la sesión autenticada.</summary>
 public sealed class CartController : Controller
 {
-    private readonly ICartService cartService;
-    private readonly IOrderService orders;
+    private readonly CartService cartService;
+    private readonly OrderService orders;
 
-    /// <summary>Recibe los servicios de carrito y pedidos.</summary>
-    public CartController(ICartService cartService, IOrderService orders)
+    public CartController(CartService cartService, OrderService orders)
     {
         this.cartService = cartService;
         this.orders = orders;
     }
 
     [HttpGet]
-    /// <summary>GET: muestra las líneas válidas del carrito.</summary>
-    public async Task<IActionResult> Index(CancellationToken cancellationToken)
-    {
-        return View(await cartService.GetAsync(cancellationToken));
-    }
+    public IActionResult Index() => View(cartService.Get());
 
     [HttpPost]
-    /// <summary>POST: cambia unidades o quita la línea si la cantidad es cero.</summary>
-    public async Task<IActionResult> Update(
-        int id,
-        int quantity,
-        CancellationToken cancellationToken)
+    /// <summary>POST: cambia unidades o retira la línea si la cantidad llega a cero.</summary>
+    public IActionResult Update(int id, int quantity)
     {
-        var result = await cartService.SetQuantityAsync(id, quantity, cancellationToken);
-        if (result.Succeeded)
-        {
-            TempData["Message"] = quantity <= 0
-                ? "Elemento quitado del carrito."
-                : "Cantidad actualizada.";
-        }
-        else
-        {
-            TempData["Error"] = result.Error;
-        }
-
+        var result = cartService.SetQuantity(id, quantity);
+        TempData[result.Succeeded ? "Message" : "Error"] = result.Succeeded
+            ? quantity <= 0 ? "Elemento quitado del carrito." : "Cantidad actualizada."
+            : result.Error;
         return RedirectToAction(nameof(Index));
     }
 
     [HttpPost]
-    /// <summary>POST: elimina un libro concreto del carrito.</summary>
     public IActionResult Remove(int id)
     {
         cartService.Remove(id);
@@ -59,7 +42,6 @@ public sealed class CartController : Controller
     }
 
     [HttpPost]
-    /// <summary>POST: vacía el carrito completo.</summary>
     public IActionResult Clear()
     {
         cartService.Clear();
@@ -68,10 +50,9 @@ public sealed class CartController : Controller
     }
 
     [HttpGet]
-    /// <summary>GET: muestra el resumen y el formulario de pago ficticio.</summary>
-    public async Task<IActionResult> Checkout(CancellationToken cancellationToken)
+    public IActionResult Checkout()
     {
-        var cart = await cartService.GetAsync(cancellationToken);
+        var cart = cartService.Get();
         if (cart.IsEmpty)
         {
             TempData["Error"] = "Añade algún libro antes de continuar al pago.";
@@ -82,12 +63,10 @@ public sealed class CartController : Controller
     }
 
     [HttpPost]
-    /// <summary>POST: valida el pago y crea el pedido persistente.</summary>
-    public async Task<IActionResult> Checkout(
-        CheckoutPageViewModel model,
-        CancellationToken cancellationToken)
+    /// <summary>POST: el servidor vuelve a validar el carrito antes de crear el pedido.</summary>
+    public IActionResult Checkout(CheckoutPageViewModel model)
     {
-        var cart = await cartService.GetAsync(cancellationToken);
+        var cart = cartService.Get();
         model.Cart = cart;
         if (cart.IsEmpty)
         {
@@ -106,11 +85,7 @@ public sealed class CartController : Controller
             return Challenge();
         }
 
-        var result = await orders.CheckoutAsync(
-            userId,
-            cartService.GetQuantities(),
-            model.Payment,
-            cancellationToken);
+        var result = orders.Checkout(userId, cartService.GetQuantities(), model.Payment);
         if (!result.Succeeded)
         {
             ModelState.AddModelError("Payment.CardNumber", result.Error!);

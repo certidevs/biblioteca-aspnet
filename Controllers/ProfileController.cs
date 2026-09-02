@@ -1,10 +1,10 @@
-using BibliotecaAspNet.Services;
+using System.Security.Claims;
 using BibliotecaAspNet.Models;
+using BibliotecaAspNet.Services;
 using BibliotecaAspNet.ViewModels.Profile;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace BibliotecaAspNet.Controllers;
 
@@ -12,13 +12,12 @@ namespace BibliotecaAspNet.Controllers;
 /// <summary>Consulta y edición del perfil del usuario autenticado.</summary>
 public sealed class ProfileController : Controller
 {
-    private readonly IUserService users;
+    private readonly UserService users;
     private readonly UserManager<ApplicationUser> userManager;
     private readonly SignInManager<ApplicationUser> signInManager;
 
-    /// <summary>Recibe el servicio de usuarios y los gestores de sesión de Identity.</summary>
     public ProfileController(
-        IUserService users,
+        UserService users,
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager)
     {
@@ -28,22 +27,7 @@ public sealed class ProfileController : Controller
     }
 
     [HttpGet]
-    /// <summary>GET: muestra datos personales, favoritos, reseñas y pedidos.</summary>
-    public async Task<IActionResult> Index(CancellationToken cancellationToken)
-    {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId is null)
-        {
-            return Challenge();
-        }
-
-        var model = await users.GetProfileAsync(userId, cancellationToken);
-        return model is null ? NotFound() : View(model);
-    }
-
-    [HttpGet]
-    /// <summary>GET: muestra el formulario de nombre, email y avatar.</summary>
-    public async Task<IActionResult> Edit(CancellationToken cancellationToken)
+    public IActionResult Index()
     {
         var userId = GetUserId();
         if (userId is null)
@@ -51,15 +35,26 @@ public sealed class ProfileController : Controller
             return Challenge();
         }
 
-        var model = await users.GetProfileEditModelAsync(userId, cancellationToken);
+        var model = users.GetProfile(userId);
+        return model is null ? NotFound() : View(model);
+    }
+
+    [HttpGet]
+    public IActionResult Edit()
+    {
+        var userId = GetUserId();
+        if (userId is null)
+        {
+            return Challenge();
+        }
+
+        var model = users.GetProfileEditModel(userId);
         return model is null ? NotFound() : View(model);
     }
 
     [HttpPost]
-    /// <summary>POST: valida y actualiza el perfil del usuario actual.</summary>
-    public async Task<IActionResult> Edit(
-        ProfileEditViewModel model,
-        CancellationToken cancellationToken)
+    /// <summary>Identity requiere operaciones asíncronas para cambiar la cuenta y refrescar la cookie.</summary>
+    public async Task<IActionResult> Edit(ProfileEditViewModel model)
     {
         var userId = GetUserId();
         if (userId is null)
@@ -69,15 +64,15 @@ public sealed class ProfileController : Controller
 
         if (!ModelState.IsValid)
         {
-            await RestoreCurrentAvatarAsync(model, userId, cancellationToken);
+            RestoreCurrentAvatar(model, userId);
             return View(model);
         }
 
-        var result = await users.UpdateProfileAsync(userId, model, cancellationToken);
+        var result = await users.UpdateProfileAsync(userId, model);
         if (!result.Succeeded)
         {
             AddIdentityErrors(result);
-            await RestoreCurrentAvatarAsync(model, userId, cancellationToken);
+            RestoreCurrentAvatar(model, userId);
             return View(model);
         }
 
@@ -87,14 +82,10 @@ public sealed class ProfileController : Controller
     }
 
     [HttpGet]
-    /// <summary>GET: muestra el formulario de cambio de contraseña.</summary>
     public IActionResult ChangePassword() => View(new ChangePasswordViewModel());
 
     [HttpPost]
-    /// <summary>POST: comprueba la contraseña actual y guarda la nueva.</summary>
-    public async Task<IActionResult> ChangePassword(
-        ChangePasswordViewModel model,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
     {
         if (!ModelState.IsValid)
         {
@@ -107,7 +98,7 @@ public sealed class ProfileController : Controller
             return Challenge();
         }
 
-        var result = await users.ChangePasswordAsync(userId, model, cancellationToken);
+        var result = await users.ChangePasswordAsync(userId, model);
         if (!result.Succeeded)
         {
             AddIdentityErrors(result);
@@ -119,20 +110,14 @@ public sealed class ProfileController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    /// <summary>Lee el ID estable de Identity desde las claims de la cookie.</summary>
     private string? GetUserId() => User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-    /// <summary>Restaura el avatar actual cuando el formulario debe volver a mostrarse.</summary>
-    private async Task RestoreCurrentAvatarAsync(
-        ProfileEditViewModel model,
-        string userId,
-        CancellationToken cancellationToken)
+    private void RestoreCurrentAvatar(ProfileEditViewModel model, string userId)
     {
-        var current = await users.GetProfileEditModelAsync(userId, cancellationToken);
-        model.CurrentAvatarFileName = current?.CurrentAvatarFileName;
+        model.CurrentAvatarFileName = users.GetProfileEditModel(userId)?.CurrentAvatarFileName;
     }
 
-    /// <summary>Refresca la cookie para reflejar cambios del perfil inmediatamente.</summary>
+    /// <summary>Actualiza la cookie cuando cambia información que muestra el layout.</summary>
     private async Task RefreshSignInAsync(string userId)
     {
         var user = await userManager.FindByIdAsync(userId);
@@ -142,7 +127,6 @@ public sealed class ProfileController : Controller
         }
     }
 
-    /// <summary>Traslada errores de Identity al resumen de validación de Razor.</summary>
     private void AddIdentityErrors(IdentityResult result)
     {
         foreach (var error in result.Errors)
