@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- EF Core es el equivalente .NET de JPA/Hibernate. SQLite sustituye a H2. -->
+    <!-- EF Core proporciona el acceso ORM a la base de datos SQLite. -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.11" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.11">
       <PrivateAssets>all</PrivateAssets>

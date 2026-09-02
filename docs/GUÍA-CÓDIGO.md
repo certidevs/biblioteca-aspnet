@@ -84,13 +84,12 @@ creado correctamente» tras una redirección.
 
 Las acciones con `[Authorize]` ya tienen una cookie válida. Por ello usan
 `User.GetRequiredUserId()`: es un nombre legible para extraer de los *claims* el ID de
-la cuenta actual, equivalente al principal autenticado que recibirías en un
-controlador de Spring Security.
+la cuenta actual.
 
 ## 4. `Models` y `ViewModels`
 
-Un `ViewModel` es equivalente a un DTO de Spring Boot, pero suele organizarse por
-página. No es una capa complicada:
+Un `ViewModel` agrupa los datos que necesita una página o un formulario. No es una capa
+complicada:
 
 - `Models/Book.cs` representa una fila persistente y sus relaciones.
 - `ViewModels/Books/BookFormViewModel.cs` representa los campos que llegan del
@@ -153,7 +152,7 @@ una, para que cada alumno entienda qué tabla y qué pantalla está cambiando.
 el tipo de test unitario más fácil de entender: entrada, llamada y resultado esperado.
 
 ```bash
-dotnet test BibliotecaAspNet.slnx
+dotnet test BibliotecaAspNet.sln
 ```
 
 `.github/workflows/build-and-test.yml` ejecuta exactamente la misma comprobación en

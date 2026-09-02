@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.0.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BibliotecaAspNet", "BibliotecaAspNet.csproj", "{6E4E5FF7-A2C6-4E63-ABF1-B217EE60CB6B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BibliotecaAspNet.Tests", "tests\BibliotecaAspNet.Tests\BibliotecaAspNet.Tests.csproj", "{0E1B52E1-BDE4-4E03-9573-3B477D617AE6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6E4E5FF7-A2C6-4E63-ABF1-B217EE60CB6B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6E4E5FF7-A2C6-4E63-ABF1-B217EE60CB6B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6E4E5FF7-A2C6-4E63-ABF1-B217EE60CB6B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6E4E5FF7-A2C6-4E63-ABF1-B217EE60CB6B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0E1B52E1-BDE4-4E03-9573-3B477D617AE6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E1B52E1-BDE4-4E03-9573-3B477D617AE6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E1B52E1-BDE4-4E03-9573-3B477D617AE6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0E1B52E1-BDE4-4E03-9573-3B477D617AE6}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

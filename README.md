@@ -1,42 +1,88 @@
 # Biblioteca ASP.NET
 
-Proyecto de referencia del curso, equivalente a
-[proyecto_biblioteca](https://github.com/alansastre/proyecto_biblioteca), implementado
-con C# y ASP.NET Core MVC. Está pensado para que se pueda leer desde cero y reutilizar
-como base de los proyectos de grupo.
+Proyecto de referencia del curso para aprender C# y ASP.NET Core MVC. Incluye usuarios,
+catálogo, carrito, pedidos, imágenes y datos demo. No necesita un servidor de base de
+datos: usa SQLite local.
 
-## Stack
+## Requisitos
 
-- .NET 10 LTS y C# 14.
-- ASP.NET Core MVC: controladores y vistas Razor (`.cshtml`).
-- Entity Framework Core 10 + SQLite, equivalente práctico de JPA/Hibernate + H2.
-- ASP.NET Core Identity: registro, login por cookie, roles y contraseñas.
-- Bootstrap 5.3, Font Awesome 7 y modo claro/oscuro.
-- Docker para explicar el empaquetado y un despliegue demostrativo en Render.
+- SDK de .NET 10. `global.json` selecciona el SDK 10.0.400 o una actualización
+  compatible.
+- Visual Studio Code y C# Dev Kit. Es el IDE estándar del curso en Windows, macOS y
+  Linux.
+- Git. Docker es opcional y solo se usa al explicar despliegue.
 
-SQLite se guarda localmente en `App_Data/biblioteca.db`; no requiere instalar un
-servidor de base de datos. Las migraciones crean el esquema y el inicializador aporta
-datos demo al primer arranque.
+No instales ASP.NET, C#, SQLite ni Entity Framework por separado: los aporta el SDK o
+se restauran como dependencias del proyecto.
 
-## Funcionalidades incluidas
+## Instalación inicial
 
-- CRUD de libros, autores y categorías para el rol administrador.
-- Búsquedas, filtros, favoritos y reseñas.
-- Registro, login, logout, perfil, avatar y cambio de contraseña.
-- Administración de usuarios: alta, edición, rol, estado y borrado seguro.
-- Carrito con cantidades, checkout ficticio y pedidos históricos.
-- Portadas de libros y fotos de autores; subida de imágenes validada.
-- Datos demo: seis libros, autores, categorías, reseñas y un pedido.
+Instala .NET 10 SDK, Visual Studio Code y C# Dev Kit una sola vez en el ordenador.
 
-## Ejecutar
+### Windows (PowerShell)
 
-Desde esta carpeta:
-
-```bash
-dotnet run --project BibliotecaAspNet.csproj
+```powershell
+winget install --id Microsoft.DotNet.SDK.10 --exact
+winget install --id Microsoft.VisualStudioCode --exact
+winget install --id Git.Git --exact
 ```
 
-Abrir la URL que muestra la consola (normalmente `http://localhost:5085`).
+Cierra y abre una terminal nueva; después instala la extensión:
+
+```powershell
+code --install-extension ms-dotnettools.csdevkit
+```
+
+### macOS (Terminal, con Homebrew)
+
+```bash
+brew install dotnet
+brew install --cask visual-studio-code
+brew install git
+code --install-extension ms-dotnettools.csdevkit
+```
+
+Si no utilizas Homebrew, instala el SDK de .NET 10 con el instalador oficial de
+[macOS](https://dotnet.microsoft.com/download/dotnet/10.0) y añade C# Dev Kit desde
+el panel Extensions de VS Code.
+
+### Ubuntu 26.04 (Terminal)
+
+```bash
+sudo apt-get update
+sudo apt-get install -y dotnet-sdk-10.0 git
+sudo snap install code --classic
+code --install-extension ms-dotnettools.csdevkit
+```
+
+Para otra distribución Linux, sigue el instalador oficial de
+[.NET para Linux](https://learn.microsoft.com/dotnet/core/install/linux) y, una vez
+instalado VS Code, ejecuta el último comando.
+
+Comprueba la instalación desde esta carpeta:
+
+```bash
+dotnet --version
+```
+
+`dotnet --version` debe mostrar `10.0.400` o una actualización compatible de .NET 10.
+Si el comando `code` no se reconoce, abre VS Code e instala C# Dev Kit desde
+**Extensions**.
+
+## Primer arranque
+
+Abre la carpeta `biblioteca-aspnet` en VS Code, no la carpeta padre. La extensión
+carga automáticamente `BibliotecaAspNet.sln`.
+
+```bash
+code .
+dotnet restore BibliotecaAspNet.sln
+dotnet tool restore
+dotnet run --project BibliotecaAspNet.csproj --launch-profile http
+```
+
+Abre `http://localhost:5251`. El primer arranque crea `App_Data/biblioteca.db`, aplica
+las migraciones y añade datos demo.
 
 Usuarios de demo:
 
@@ -45,92 +91,71 @@ Usuarios de demo:
 
 Tarjeta de checkout ficticia: `4242 4242 4242 4242`, caducidad `12/30`, CVV `123`.
 
-## Comprobación automática
+## Comandos de trabajo diario
 
-El repositorio incluye [el workflow de GitHub Actions](.github/workflows/build-and-test.yml).
-En cada `push` a `main`, *pull request* o ejecución manual, instala .NET 10, restaura
-dependencias, compila en Release y ejecuta los tests.
-
-También se puede ejecutar localmente:
+Todos se ejecutan desde la raíz de este repositorio.
 
 ```bash
-dotnet test BibliotecaAspNet.slnx
+# Restaurar dependencias NuGet y herramientas locales tras clonar o actualizar
+dotnet restore BibliotecaAspNet.sln
+dotnet tool restore
+
+# Ejecutar la aplicación
+dotnet run --project BibliotecaAspNet.csproj --launch-profile http
+
+# Ejecutar con recarga al guardar archivos
+dotnet watch --project BibliotecaAspNet.csproj run --launch-profile http
+
+# Compilar y ejecutar los tests
+dotnet build BibliotecaAspNet.sln
+dotnet test BibliotecaAspNet.sln
 ```
 
-El primer test (`ColorContrastTests`) comprueba el contraste de las etiquetas de
-categoría, una regla de interfaz real y aislada. Sirve como ejemplo mínimo antes de
-introducir pruebas de controladores, Identity o SQLite en clase.
+### Entity Framework y SQLite
 
-## Arquitectura elegida para el curso
+`dotnet-ef` está fijado en `.config/dotnet-tools.json`, por lo que `dotnet tool
+restore` lo deja disponible sin instalar nada de forma global.
 
-```text
-Navegador → Controller → servicio concreto solo si aporta una regla → DbContext → SQLite
-                   ↓
-              ViewModel → Razor + Bootstrap
+```bash
+# Después de cambiar una entidad: crear y aplicar una migración
+dotnet ef migrations add NombreDescriptivo
+dotnet ef database update
+
+# Corregir la última migración solo antes de aplicarla a la base de datos
+dotnet ef migrations remove
 ```
 
-`ApplicationDbContext` ya es la unidad de trabajo y el repositorio de EF Core. Por
-eso **no hay carpeta `Repositories/` ni interfaces `I...Service`**: una interfaz solo
-tiene sentido si existen varias implementaciones o si el proyecto necesita desacoplar
-un módulo de verdad. Para este MVP docente serían ficheros y saltos de lectura sin
-valor.
+Las migraciones se aplican también al arrancar la aplicación en desarrollo. El comando
+`database update` se incluye para aprender el flujo explícito que se usará en clase.
 
-Los servicios concretos son pequeños y solo se conservan cuando aclaran una operación
-que no pertenece a una acción HTTP sencilla:
+### Git, CI y Docker
 
-- `BookService`, `AuthorService`, `CategoryService` y `ReviewService`: consultas y
-  reglas de su dominio usando EF Core de forma visible.
-- `CartService`: conserva IDs y cantidades en sesión, nunca precios.
-- `OrderService`: vuelve a validar el carrito y crea `Order` + `OrderItem`.
-- `ImageStorage`: valida y guarda archivos locales.
-- `UserService`: agrupa las operaciones de usuarios de Identity que se reutilizarán
-  en los proyectos de grupo.
-
-El CRUD habitual usa métodos síncronos y `SaveChanges()`. Solo las operaciones de
-Identity conservan `async`/`await`, porque `UserManager`, `RoleManager` y
-`SignInManager` solo ofrecen su API de contraseñas, roles y cookies de esa manera. No
-se usan `CancellationToken`, concurrencia ni patrones asíncronos en el dominio.
-
-## Carpetas importantes
-
-```text
-Controllers/    # Rutas HTTP, ModelState y selección de vista
-Data/           # DbContext, migraciones y datos demo
-Models/         # Entidades y asociaciones EF Core
-Services/       # Ayudas concretas que aportan una regla real
-ViewModels/     # DTOs de formularios y de cada pantalla
-Views/          # Razor, Bootstrap y layout común
-wwwroot/        # CSS, JS, Bootstrap, Font Awesome e imágenes
-Utilities/      # Ayudas pequeñas y sin estado: claims y contraste de color
-docs/           # Guías de código, base de grupos y despliegue
+```bash
+git status
+git add .
+git commit -m "feat: describe el cambio"
+git pull --rebase
+git push
 ```
 
-Un `ViewModel` es el equivalente más cercano a un DTO de Spring Boot. Por ejemplo,
-`BookFormViewModel` contiene `IFormFile` e IDs de categorías que existen solo en el
-formulario; `Book` conserva las relaciones reales que se persisten.
+[GitHub Actions](.github/workflows/build-and-test.yml) ejecuta restauración,
+compilación Release y tests en cada `push` y *pull request*.
 
-Para que las acciones se lean de forma directa, cada página recibe un ViewModel tipado
-y los controladores reservan `ViewData["Title"]` para el título del layout. Una acción
-devuelve `IActionResult`, que puede ser `View(model)`, `RedirectToAction(...)`,
-`NotFound()` o `Forbid()` según el resultado de la petición. La guía explica el flujo
-con ejemplos breves.
+Docker es opcional:
 
-## Base común de los grupos
-
-Se pueden conservar `ApplicationUser`, Identity, cuenta, perfil, usuarios,
-`ImageStorage` y las vistas asociadas. Cuando una entidad pertenece a una cuenta,
-añade esta relación:
-
-```csharp
-public string UserId { get; set; } = string.Empty;
-public ApplicationUser User { get; set; } = null!;
+```bash
+docker build -t biblioteca-aspnet:local .
+docker run --rm -p 10000:10000 biblioteca-aspnet:local
 ```
 
-Cada equipo añade después su entidad (`Product`, `Movie`, `Ticket`, `Dish`…) como un
-slice vertical: modelo, relación y migración, ViewModel, controlador, vistas y datos
-demo. La base de usuarios queda resuelta desde el primer commit.
+El contenedor queda disponible en `http://localhost:10000`.
 
-## Guías
+## IDEs y guías de clase
+
+En VS Code, selecciona el perfil `http` y pulsa F5 para depurar. Las tareas
+`Biblioteca: compilar` y `Biblioteca: ejecutar tests` están disponibles en
+**Terminal → Run Task**. En Windows, Visual Studio 2026 también abre
+`BibliotecaAspNet.sln`; consulta [la guía de IDEs](docs/IDE-SETUP.md).
 
 - [Cómo leer el código y las asociaciones](docs/GUÍA-CÓDIGO.md)
 - [Qué conservar al crear el repositorio de un grupo](docs/BASE-COMUN-GRUPOS.md)

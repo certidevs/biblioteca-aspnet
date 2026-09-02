@@ -25,7 +25,7 @@ builder.Services.AddSession(options =>
 });
 builder.Services.AddHttpContextAccessor();
 
-// Identity es la alternativa de ASP.NET Core a Spring Security.
+// Identity gestiona usuarios, cookies de sesión, contraseñas y roles.
 builder.Services
     .AddIdentity<ApplicationUser, IdentityRole>(options =>
     {

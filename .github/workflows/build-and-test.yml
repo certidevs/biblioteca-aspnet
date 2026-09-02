@@ -29,10 +29,10 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Restore dependencies
-        run: dotnet restore BibliotecaAspNet.slnx
+        run: dotnet restore BibliotecaAspNet.sln
 
       - name: Build in Release
-        run: dotnet build BibliotecaAspNet.slnx --configuration Release --no-restore
+        run: dotnet build BibliotecaAspNet.sln --configuration Release --no-restore
 
       - name: Run unit tests
-        run: dotnet test BibliotecaAspNet.slnx --configuration Release --no-build --verbosity normal
+        run: dotnet test BibliotecaAspNet.sln --configuration Release --no-build --verbosity normal

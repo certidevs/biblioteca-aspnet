@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 namespace BibliotecaAspNet.Data;
 
 /// <summary>
-/// Contexto de EF Core. Es el equivalente a un EntityManager de JPA + configuración ORM.
+/// Contexto de EF Core: configura el acceso a SQLite y reúne las tablas de la aplicación.
 /// </summary>
 public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
