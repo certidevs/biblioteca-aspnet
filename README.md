@@ -6,8 +6,7 @@ datos: usa SQLite local.
 
 ## Requisitos
 
-- SDK de .NET 10. `global.json` selecciona el SDK 10.0.400 o una actualización
-  compatible.
+- SDK de .NET 10. `global.json` acepta cualquier SDK de la versión 10.0.
 - Visual Studio Code y C# Dev Kit. Es el IDE estándar del curso en Windows, macOS y
   Linux.
 - Git. Docker es opcional y solo se usa al explicar despliegue.
@@ -65,7 +64,7 @@ Comprueba la instalación desde esta carpeta:
 dotnet --version
 ```
 
-`dotnet --version` debe mostrar `10.0.400` o una actualización compatible de .NET 10.
+`dotnet --version` debe mostrar una versión que empiece por `10.0`.
 Si el comando `code` no se reconoce, abre VS Code e instala C# Dev Kit desde
 **Extensions**.
 
