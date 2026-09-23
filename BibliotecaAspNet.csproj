@@ -19,10 +19,10 @@
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.11" />
   </ItemGroup>
 
-  <!-- El SDK incluye por defecto todos los .cs bajo la raíz; los tests se compilan
-       exclusivamente desde su propio proyecto tests/BibliotecaAspNet.Tests. -->
-  <ItemGroup>
-    <Compile Remove="tests/**/*.cs" />
-  </ItemGroup>
+  <!-- El SDK incluye todos los archivos bajo la raíz; la carpeta tests pertenece a su
+       propio proyecto y no debe compilarse ni copiarse como contenido de la web. -->
+  <PropertyGroup>
+    <DefaultItemExcludes>$(DefaultItemExcludes);tests/**</DefaultItemExcludes>
+  </PropertyGroup>
 
 </Project>
